@@ -126,20 +126,116 @@ Tensor<_DType, _Device> Tensor<_DType, _Device>::clone() const {
     return Tensor(*this);
 }
 
-// Tensor& operator+=(const Tensor& other);
-// Tensor operator+(const Tensor& other) const;
-// Tensor& operator+=(scalar_t scalar);
-// Tensor operator+(scalar_t scalar) const;
+template <DType _DType, DeviceLikeType _Device>
+Tensor<_DType, _Device>& Tensor<_DType, _Device>::operator+=(
+    const Tensor& other) {
+    if (desc_.numel() != other.desc_.numel()) {
+        throw std::runtime_error(
+            "The size of tensor a must match the size of tensor b at "
+            "non-singleton dimension");
+    }
+    std::for_each(begin(), end(),
+                  [it2 = other.begin()](auto& a) mutable { a += *it2++; });
 
-// Tensor& operator-=(const Tensor& other);
-// Tensor operator-(const Tensor& other) const;
-// Tensor& operator-=(scalar_t scalar);
-// Tensor operator-(scalar_t scalar) const;
+    return *this;
+}
 
-// Tensor& operator*=(const Tensor& other);
-// Tensor operator*(const Tensor& other) const;
-// Tensor& operator*=(scalar_t scalar);
-// Tensor operator*(scalar_t scalar) const;
+template <DType _DType, DeviceLikeType _Device>
+Tensor<_DType, _Device> Tensor<_DType, _Device>::operator+(
+    const Tensor& other) const {
+    Tensor result = clone();
+    result += other;
+    return result;
+}
+
+template <DType _DType, DeviceLikeType _Device>
+Tensor<_DType, _Device>& Tensor<_DType, _Device>::operator+=(scalar_t scalar) {
+    std::for_each(begin(), end(), [scalar](auto& a) { a += scalar; });
+
+    return *this;
+}
+
+template <DType _DType, DeviceLikeType _Device>
+Tensor<_DType, _Device> Tensor<_DType, _Device>::operator+(
+    scalar_t scalar) const {
+    Tensor result = clone();
+    result += scalar;
+    return result;
+}
+
+template <DType _DType, DeviceLikeType _Device>
+Tensor<_DType, _Device>& Tensor<_DType, _Device>::operator-=(
+    const Tensor& other) {
+    if (desc_.numel() != other.desc_.numel()) {
+        throw std::runtime_error(
+            "The size of tensor a must match the size of tensor b at "
+            "non-singleton dimension");
+    }
+    std::for_each(begin(), end(),
+                  [it2 = other.begin()](auto& a) mutable { a -= *it2++; });
+
+    return *this;
+}
+
+template <DType _DType, DeviceLikeType _Device>
+Tensor<_DType, _Device> Tensor<_DType, _Device>::operator-(
+    const Tensor& other) const {
+    Tensor result = clone();
+    result -= other;
+    return result;
+}
+
+template <DType _DType, DeviceLikeType _Device>
+Tensor<_DType, _Device>& Tensor<_DType, _Device>::operator-=(scalar_t scalar) {
+    std::for_each(begin(), end(), [scalar](auto& a) { a -= scalar; });
+
+    return *this;
+}
+
+template <DType _DType, DeviceLikeType _Device>
+Tensor<_DType, _Device> Tensor<_DType, _Device>::operator-(
+    scalar_t scalar) const {
+    Tensor result = clone();
+    result -= scalar;
+    return result;
+}
+
+template <DType _DType, DeviceLikeType _Device>
+Tensor<_DType, _Device>& Tensor<_DType, _Device>::operator*=(
+    const Tensor& other) {
+    if (desc_.numel() != other.desc_.numel()) {
+        throw std::runtime_error(
+            "The size of tensor a must match the size of tensor b at "
+            "non-singleton dimension");
+    }
+    std::for_each(begin(), end(),
+                  [it2 = other.begin()](auto& a) mutable { a *= *it2++; });
+
+    return *this;
+}
+
+template <DType _DType, DeviceLikeType _Device>
+Tensor<_DType, _Device> Tensor<_DType, _Device>::operator*(
+    const Tensor& other) const {
+    Tensor result = clone();
+    result *= other;
+    return result;
+}
+
+template <DType _DType, DeviceLikeType _Device>
+Tensor<_DType, _Device>& Tensor<_DType, _Device>::operator*=(scalar_t scalar) {
+    std::for_each(begin(), end(), [scalar](auto& a) { a *= scalar; });
+
+    return *this;
+}
+
+template <DType _DType, DeviceLikeType _Device>
+Tensor<_DType, _Device> Tensor<_DType, _Device>::operator*(
+    scalar_t scalar) const {
+    Tensor result = clone();
+    result *= scalar;
+    return result;
+}
 
 template <DType _DType, DeviceLikeType _Device>
 Tensor<_DType, _Device> Tensor<_DType, _Device>::mul(
@@ -147,7 +243,8 @@ Tensor<_DType, _Device> Tensor<_DType, _Device>::mul(
     if (dim() == 1 && other.dim() == 1) {
         if (desc_.shape_[0] != other.desc_.shape_[0]) {
             throw std::runtime_error(
-                "The size of tensor a must match the size of tensor b at "
+                "The size of tensor a must match the size of tensor b "
+                "at "
                 "non-singleton dimension 0");
         }
         scalar_t acc{};
@@ -161,7 +258,8 @@ Tensor<_DType, _Device> Tensor<_DType, _Device>::mul(
     if (dim() == 2 && other.dim() == 1) {
         if (desc_.shape_[1] != other.desc_.shape_[0]) {
             throw std::runtime_error(
-                "The size of tensor a must match the size of tensor b at "
+                "The size of tensor a must match the size of tensor b "
+                "at "
                 "non-singleton dimension");
         }
 
@@ -180,7 +278,8 @@ Tensor<_DType, _Device> Tensor<_DType, _Device>::mul(
     if (dim() == 1 && other.dim() == 2) {
         if (desc_.shape_[0] != other.desc_.shape_[0]) {
             throw std::runtime_error(
-                "The size of tensor a must match the size of tensor b at "
+                "The size of tensor a must match the size of tensor b "
+                "at "
                 "non-singleton dimension");
         }
         Tensor result({other.desc_.shape_[1]}, scalar_t{});
@@ -198,7 +297,8 @@ Tensor<_DType, _Device> Tensor<_DType, _Device>::mul(
     if (dim() == 2 && other.dim() == 2) {
         if (desc_.shape_[1] != other.desc_.shape_[0]) {
             throw std::runtime_error(
-                "The size of tensor a must match the size of tensor b at "
+                "The size of tensor a must match the size of tensor b "
+                "at "
                 "non-singleton dimension");
         }
 
@@ -222,13 +322,15 @@ Tensor<_DType, _Device> Tensor<_DType, _Device>::mul(
 
 // template <>
 // Tensor<DType::float32, DeviceLikeType::neon>
-// Tensor<DType::float32, DeviceLikeType::neon>::mul(const Tensor& other) const
+// Tensor<DType::float32, DeviceLikeType::neon>::mul(const Tensor&
+// other) const
 // {
 // }
 
 // template <>
 // Tensor<DType::float32, DeviceLikeType::amx>
-// Tensor<DType::float32, DeviceLikeType::amx>::mul(const Tensor& other) const {
+// Tensor<DType::float32, DeviceLikeType::amx>::mul(const Tensor& other)
+// const {
 // }
 
 template <DType _DType, DeviceLikeType _Device>

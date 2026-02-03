@@ -6,6 +6,7 @@
 
 #include "device.hpp"
 #include "dtype.hpp"
+#include "tensor_iterator.hpp"
 #include "tensor_view.hpp"
 
 namespace fastinf {
@@ -14,6 +15,28 @@ class Tensor {
  public:
     using scalar_t = typename DTypeTraits<_DType>::type;
     using view_t = TensorView<_DType, _Device>;
+
+    using Iterator = TensorIterator<scalar_t>;
+    using ConstIterator = TensorIterator<const scalar_t>;
+
+    Iterator begin() {
+        return Iterator(&data_[desc_.offset_]);
+    }
+    Iterator end() {
+        return Iterator(&data_[desc_.offset_ + desc_.numel()]);
+    }
+    ConstIterator begin() const {
+        return ConstIterator(&data_[desc_.offset_]);
+    }
+    ConstIterator end() const {
+        return ConstIterator(&data_[desc_.offset_ + desc_.numel()]);
+    }
+    ConstIterator cbegin() const {
+        return begin();
+    }
+    ConstIterator cend() const {
+        return end();
+    }
 
     Tensor() = default;
     explicit Tensor(Shape shape, const scalar_t& value = scalar_t{});
