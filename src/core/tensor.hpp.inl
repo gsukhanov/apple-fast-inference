@@ -1,5 +1,4 @@
 #include "fastinf/core/tensor.hpp"
-#include "fastinf/core/tensor_printer.hpp"
 
 namespace fastinf {
 template <DType _DType, DeviceLikeType _Device>
@@ -13,14 +12,14 @@ typename Tensor<_DType, _Device>::Iterator Tensor<_DType, _Device>::end() {
 }
 
 template <DType _DType, DeviceLikeType _Device>
-typename Tensor<_DType, _Device>::ConstIterator
-Tensor<_DType, _Device>::begin() const {
+typename Tensor<_DType, _Device>::ConstIterator Tensor<_DType, _Device>::begin()
+    const {
     return ConstIterator(data_, &desc_);
 }
 
 template <DType _DType, DeviceLikeType _Device>
-typename Tensor<_DType, _Device>::ConstIterator
-Tensor<_DType, _Device>::end() const {
+typename Tensor<_DType, _Device>::ConstIterator Tensor<_DType, _Device>::end()
+    const {
     return ConstIterator(data_, &desc_, true);
 }
 
@@ -31,8 +30,8 @@ Tensor<_DType, _Device>::cbegin() const {
 }
 
 template <DType _DType, DeviceLikeType _Device>
-typename Tensor<_DType, _Device>::ConstIterator
-Tensor<_DType, _Device>::cend() const {
+typename Tensor<_DType, _Device>::ConstIterator Tensor<_DType, _Device>::cend()
+    const {
     return end();
 }
 

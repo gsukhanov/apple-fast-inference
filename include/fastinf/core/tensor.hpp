@@ -7,6 +7,7 @@
 #include "device.hpp"
 #include "dtype.hpp"
 #include "tensor_iterator.hpp"
+#include "tensor_printer.hpp"
 #include "tensor_view.hpp"
 
 namespace fastinf {
