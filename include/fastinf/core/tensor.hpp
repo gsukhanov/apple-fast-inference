@@ -18,25 +18,12 @@ class Tensor {
 
     using Iterator = TensorIterator<scalar_t>;
     using ConstIterator = TensorIterator<const scalar_t>;
-
-    Iterator begin() {
-        return Iterator(&data_[desc_.offset_]);
-    }
-    Iterator end() {
-        return Iterator(&data_[desc_.offset_ + desc_.numel()]);
-    }
-    ConstIterator begin() const {
-        return ConstIterator(&data_[desc_.offset_]);
-    }
-    ConstIterator end() const {
-        return ConstIterator(&data_[desc_.offset_ + desc_.numel()]);
-    }
-    ConstIterator cbegin() const {
-        return begin();
-    }
-    ConstIterator cend() const {
-        return end();
-    }
+    Iterator begin();
+    Iterator end();
+    ConstIterator begin() const;
+    ConstIterator end() const;
+    ConstIterator cbegin() const;
+    ConstIterator cend() const;
 
     Tensor() = default;
     explicit Tensor(Shape shape, const scalar_t& value = scalar_t{});

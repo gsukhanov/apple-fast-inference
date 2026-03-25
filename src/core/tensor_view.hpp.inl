@@ -8,6 +8,42 @@ TensorView<_DType, _Device>::TensorView(
 }
 
 template <DType _DType, DeviceLikeType _Device>
+typename TensorView<_DType, _Device>::Iterator
+TensorView<_DType, _Device>::begin() {
+    return Iterator(data_, &desc_);
+}
+
+template <DType _DType, DeviceLikeType _Device>
+typename TensorView<_DType, _Device>::Iterator
+TensorView<_DType, _Device>::end() {
+    return Iterator(data_, &desc_, true);
+}
+
+template <DType _DType, DeviceLikeType _Device>
+typename TensorView<_DType, _Device>::ConstIterator
+TensorView<_DType, _Device>::begin() const {
+    return ConstIterator(data_, &desc_);
+}
+
+template <DType _DType, DeviceLikeType _Device>
+typename TensorView<_DType, _Device>::ConstIterator
+TensorView<_DType, _Device>::end() const {
+    return ConstIterator(data_, &desc_, true);
+}
+
+template <DType _DType, DeviceLikeType _Device>
+typename TensorView<_DType, _Device>::ConstIterator
+TensorView<_DType, _Device>::cbegin() const {
+    return begin();
+}
+
+template <DType _DType, DeviceLikeType _Device>
+typename TensorView<_DType, _Device>::ConstIterator
+TensorView<_DType, _Device>::cend() const {
+    return end();
+}
+
+template <DType _DType, DeviceLikeType _Device>
 typename TensorView<_DType, _Device>::scalar_t*
 TensorView<_DType, _Device>::data() const {
     return data_ + desc_.offset_;
@@ -50,13 +86,15 @@ TensorView<_DType, _Device> TensorView<_DType, _Device>::permute(
     TensorDesc tmp;
     tmp.shape_.resize(perm.size());
     tmp.strides_.resize(perm.size());
+    tmp.offset_ = desc_.offset_;
 
     std::vector<bool> used(perm.size(), false);
 
     for (std::size_t i = 0; i < perm.size(); ++i) {
         const auto dim = perm[i];
 
-        if (dim > static_cast<std::int64_t>(desc_.shape_.size())) {
+        if (dim < 0 ||
+            dim >= static_cast<std::int64_t>(desc_.shape_.size())) {
             throw std::out_of_range("Dimension out of range");
         }
         if (used[dim]) {

@@ -1,6 +1,41 @@
 #include "fastinf/core/tensor.hpp"
+#include "fastinf/core/tensor_printer.hpp"
 
 namespace fastinf {
+template <DType _DType, DeviceLikeType _Device>
+typename Tensor<_DType, _Device>::Iterator Tensor<_DType, _Device>::begin() {
+    return Iterator(data_, &desc_);
+}
+
+template <DType _DType, DeviceLikeType _Device>
+typename Tensor<_DType, _Device>::Iterator Tensor<_DType, _Device>::end() {
+    return Iterator(data_, &desc_, true);
+}
+
+template <DType _DType, DeviceLikeType _Device>
+typename Tensor<_DType, _Device>::ConstIterator
+Tensor<_DType, _Device>::begin() const {
+    return ConstIterator(data_, &desc_);
+}
+
+template <DType _DType, DeviceLikeType _Device>
+typename Tensor<_DType, _Device>::ConstIterator
+Tensor<_DType, _Device>::end() const {
+    return ConstIterator(data_, &desc_, true);
+}
+
+template <DType _DType, DeviceLikeType _Device>
+typename Tensor<_DType, _Device>::ConstIterator
+Tensor<_DType, _Device>::cbegin() const {
+    return begin();
+}
+
+template <DType _DType, DeviceLikeType _Device>
+typename Tensor<_DType, _Device>::ConstIterator
+Tensor<_DType, _Device>::cend() const {
+    return end();
+}
+
 template <DType _DType, DeviceLikeType _Device>
 Tensor<_DType, _Device>::Tensor(Shape shape, const scalar_t& value)
     : desc_(shape, make_contiguous_strides(shape)) {
@@ -346,6 +381,12 @@ std::size_t Tensor<_DType, _Device>::offset_for(const Shape& indices) const {
         offset += indices[i] * desc_.strides_[i];
     }
     return offset;
+}
+
+template <DType _DType, DeviceLikeType _Device>
+std::ostream& operator<<(std::ostream& os,
+                         const Tensor<_DType, _Device>& tensor) {
+    return TensorPrinter<_DType, _Device>::print(os, tensor.view());
 }
 
 };  // namespace fastinf

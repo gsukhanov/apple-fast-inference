@@ -1,8 +1,12 @@
 #pragma once
 
 #include <cstddef>
+#include <cstdint>
 #include <iterator>
 #include <type_traits>
+#include <vector>
+
+#include "tensor_desc.hpp"
 
 namespace fastinf {
 template <class T>
@@ -14,35 +18,28 @@ class TensorIterator {
     using pointer = T*;
     using reference = T&;
 
-    explicit TensorIterator(pointer ptr) : m_ptr(ptr) {
-    }
+    TensorIterator() = default;
+    TensorIterator(pointer data, const TensorDesc* desc, bool end = false);
 
-    reference operator*() const {
-        return *m_ptr;
-    }
-    pointer operator->() const {
-        return m_ptr;
-    }
+    reference operator*() const;
+    pointer operator->() const;
 
-    TensorIterator& operator++() {
-        ++m_ptr;
-        return *this;
-    }
+    TensorIterator& operator++();
+    TensorIterator operator++(int);
 
-    TensorIterator operator++(int) {
-        TensorIterator tmp = *this;
-        ++(*this);
-        return tmp;
-    }
-
-    friend bool operator==(const TensorIterator& a, const TensorIterator& b) {
-        return a.m_ptr == b.m_ptr;
-    }
-    friend bool operator!=(const TensorIterator& a, const TensorIterator& b) {
-        return a.m_ptr != b.m_ptr;
-    }
+    bool operator==(const TensorIterator& other) const;
+    bool operator!=(const TensorIterator& other) const;
 
  private:
-    pointer m_ptr;
+    pointer m_data{nullptr};
+    const TensorDesc* m_desc{nullptr};
+    std::int64_t m_numel{0};
+    std::int64_t m_linear_index{0};
+    std::int64_t m_offset{0};
+    bool m_is_contiguous{true};
+    std::vector<std::int64_t> m_indices;
 };
+
 };  // namespace fastinf
+
+#include "../../../src/core/tensor_iterator.hpp.inl"
