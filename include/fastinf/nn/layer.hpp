@@ -12,6 +12,9 @@ namespace nn {
 template <DType _DType, DeviceLikeType _Device = DeviceLikeType::cpu>
 class Layer {
  public:
+    using tensor_t = Tensor<_DType, _Device>;
+    using scalar_t = typename DTypeTraits<_DType>::type;
+
     Layer() = default;
     Layer(const Layer&) = default;
     Layer& operator=(const Layer&) = default;
@@ -19,8 +22,7 @@ class Layer {
 
     virtual std::string name() const = 0;
     virtual void print(std::ostream& o, int level = 0) const;
-    virtual Tensor<_DType, _Device> forward(
-        const Tensor<_DType, _Device>& input) const = 0;
+    virtual tensor_t forward(const tensor_t& input) const = 0;
 };
 
 template <DType _DType, DeviceLikeType _Device>

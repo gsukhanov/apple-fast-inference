@@ -118,6 +118,11 @@ typename Tensor<_DType, _Device>::view_t Tensor<_DType, _Device>::view() const {
 }
 
 template <DType _DType, DeviceLikeType _Device>
+const Shape& Tensor<_DType, _Device>::shape() const {
+    return desc_.shape_;
+}
+
+template <DType _DType, DeviceLikeType _Device>
 typename Tensor<_DType, _Device>::scalar_t* Tensor<_DType, _Device>::data() {
     return data_;
 }

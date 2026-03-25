@@ -41,6 +41,8 @@ class Tensor {
 
     view_t view() const;
 
+    const Shape& shape() const;
+
     scalar_t* data();
     const scalar_t* data() const;
 
