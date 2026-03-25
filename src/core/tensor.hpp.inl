@@ -161,6 +161,20 @@ const typename Tensor<_DType, _Device>::scalar_t& Tensor<_DType, _Device>::at(
 }
 
 template <DType _DType, DeviceLikeType _Device>
+Tensor<_DType, _Device> Tensor<_DType, _Device>::contiguous() const {
+    if (is_contiguous()) {
+        return *this;
+    }
+
+    Tensor result(shape(), scalar_t{});
+    for (auto it1 = this->begin(), it2 = result.begin(); it1 != this->end();
+         ++it1, ++it2) {
+        *it2 = *it1;
+    }
+    return result;
+}
+
+template <DType _DType, DeviceLikeType _Device>
 Tensor<_DType, _Device> Tensor<_DType, _Device>::clone() const {
     return Tensor(*this);
 }

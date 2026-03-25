@@ -54,6 +54,7 @@ class Tensor {
     scalar_t& at(const Shape& indices);
     const scalar_t& at(const Shape& indices) const;
 
+    Tensor contiguous() const;
     Tensor clone() const;
 
     Tensor& operator+=(const Tensor& other);
