@@ -11,7 +11,7 @@
 namespace fastinf {
 namespace nn {
 template <DType _DType, DeviceLikeType _Device = DeviceLikeType::cpu>
-class Conv2D : public Layer<_DType, _Device> {
+class Conv2d : public Layer<_DType, _Device> {
  public:
     using tensor_t = Tensor<_DType, _Device>;
     using scalar_t = typename DTypeTraits<_DType>::type;
@@ -19,12 +19,12 @@ class Conv2D : public Layer<_DType, _Device> {
         std::int64_t h, w;
     };
 
-    Conv2D(std::int64_t in_channels, std::int64_t out_channels, size_2_t kernel,
+    Conv2d(std::int64_t in_channels, std::int64_t out_channels, size_2_t kernel,
            size_2_t stride = {1, 1}, size_2_t padding = {0, 0},
-           size_2_t dilation = {1, 1},
-           std::int64_t groups = 1, bool bias = true);
+           size_2_t dilation = {1, 1}, std::int64_t groups = 1,
+           bool bias = true);
 
-    Conv2D(std::int64_t in_channels, std::int64_t out_channels,
+    Conv2d(std::int64_t in_channels, std::int64_t out_channels,
            std::int64_t kernel, std::int64_t stride = 1,
            std::int64_t padding = 0, std::int64_t dilation = 1,
            std::int64_t groups = 1, bool bias = true);
