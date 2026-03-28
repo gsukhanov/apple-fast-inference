@@ -34,6 +34,32 @@ std::string Linear<_DType, _Device>::name() const {
 }
 
 template <DType _DType, DeviceLikeType _Device>
+bool Linear<_DType, _Device>::load_state(const layer_state_t& state) {
+    if (!state.contains("weight")) {
+        return false;
+    }
+
+    tensor_t weight = state.find("weight");
+    tensor_t bias({out_features_}, scalar_t{});
+    if (use_bias_) {
+        if (!state.contains("bias")) {
+            throw std::invalid_argument("Linear layer expects bias tensor");
+        }
+        bias = std::move(state.find("bias"));
+    }
+
+    if (weight.shape() != Shape{out_features_, in_features_}) {
+        throw std::invalid_argument("Linear weight shape mismatch");
+    }
+    if (bias.shape() != Shape{out_features_}) {
+        throw std::invalid_argument("Linear bias shape mismatch");
+    }
+    weight_ = std::move(weight);
+    bias_ = std::move(bias);
+    return true;
+}
+
+template <DType _DType, DeviceLikeType _Device>
 typename Linear<_DType, _Device>::tensor_t Linear<_DType, _Device>::forward(
     const tensor_t& input) const {
     if (input.dim() != 2) {
@@ -68,8 +94,7 @@ typename Linear<_DType, _Device>::tensor_t Linear<_DType, _Device>::forward(
 
 template <DType _DType, DeviceLikeType _Device>
 const typename Linear<_DType, _Device>::tensor_t&
-Linear<_DType, _Device>::weight()
-    const {
+Linear<_DType, _Device>::weight() const {
     return weight_;
 }
 
@@ -77,19 +102,6 @@ template <DType _DType, DeviceLikeType _Device>
 const typename Linear<_DType, _Device>::tensor_t&
 Linear<_DType, _Device>::bias() const {
     return bias_;
-}
-
-template <DType _DType, DeviceLikeType _Device>
-void Linear<_DType, _Device>::load_weights(const tensor_t& weight,
-                                           const tensor_t& bias) {
-    if (weight.shape() != Shape{out_features_, in_features_}) {
-        throw std::invalid_argument("Linear weight shape mismatch");
-    }
-    if (bias.shape() != Shape{out_features_}) {
-        throw std::invalid_argument("Linear bias shape mismatch");
-    }
-    weight_ = weight;
-    bias_ = bias;
 }
 
 }  // namespace nn

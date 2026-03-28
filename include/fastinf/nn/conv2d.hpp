@@ -15,6 +15,7 @@ class Conv2d : public Layer<_DType, _Device> {
  public:
     using tensor_t = Tensor<_DType, _Device>;
     using scalar_t = typename DTypeTraits<_DType>::type;
+    using layer_state_t = typename Layer<_DType, _Device>::layer_state_t;
     struct size_2_t {
         std::int64_t h, w;
     };
@@ -31,11 +32,10 @@ class Conv2d : public Layer<_DType, _Device> {
 
     std::string name() const override;
     tensor_t forward(const tensor_t& input) const override;
+    bool load_state(const layer_state_t& state) override;
 
     const tensor_t& weight() const;
     const tensor_t& bias() const;
-
-    void load_weights(const tensor_t& weight, const tensor_t& bias);
 
  private:
     std::int64_t in_channels_;

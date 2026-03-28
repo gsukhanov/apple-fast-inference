@@ -72,6 +72,34 @@ std::string Conv2d<_DType, _Device>::name() const {
 }
 
 template <DType _DType, DeviceLikeType _Device>
+bool Conv2d<_DType, _Device>::load_state(const layer_state_t& state) {
+    if (!state.contains("weight")) {
+        return false;
+    }
+
+    tensor_t weight = state.find("weight");
+    tensor_t bias({out_channels_}, scalar_t{});
+    if (use_bias_) {
+        if (!state.contains("bias")) {
+            throw std::invalid_argument("Conv2d layer expects bias tensor");
+        }
+        bias = std::move(state.find("bias"));
+    }
+
+    if (weight.shape() !=
+        Shape{out_channels_, in_channels_ / groups_, kernel_.h, kernel_.w}) {
+        throw std::invalid_argument("Conv2d weight shape mismatch");
+    }
+    if (bias.shape() != Shape{out_channels_}) {
+        throw std::invalid_argument("Conv2d bias shape mismatch");
+    }
+    weight_ = std::move(weight);
+    bias_ = std::move(bias);
+
+    return true;
+}
+
+template <DType _DType, DeviceLikeType _Device>
 typename Conv2d<_DType, _Device>::tensor_t Conv2d<_DType, _Device>::forward(
     const tensor_t& input) const {
     if (input.dim() != 4) {
@@ -152,20 +180,6 @@ template <DType _DType, DeviceLikeType _Device>
 const typename Conv2d<_DType, _Device>::tensor_t&
 Conv2d<_DType, _Device>::bias() const {
     return bias_;
-}
-
-template <DType _DType, DeviceLikeType _Device>
-void Conv2d<_DType, _Device>::load_weights(const tensor_t& weight,
-                                           const tensor_t& bias) {
-    if (weight.shape() !=
-        Shape{out_channels_, in_channels_ / groups_, kernel_.h, kernel_.w}) {
-        throw std::invalid_argument("Conv2d weight shape mismatch");
-    }
-    if (bias.shape() != Shape{out_channels_}) {
-        throw std::invalid_argument("Conv2d bias shape mismatch");
-    }
-    weight_ = weight;
-    bias_ = bias;
 }
 
 template <DType _DType, DeviceLikeType _Device>
