@@ -7,6 +7,7 @@
 #include "device.hpp"
 #include "dtype.hpp"
 #include "tensor_iterator.hpp"
+#include "tensor_printer.hpp"
 #include "tensor_view.hpp"
 
 namespace fastinf {
@@ -40,6 +41,8 @@ class Tensor {
 
     view_t view() const;
 
+    const Shape& shape() const;
+
     scalar_t* data();
     const scalar_t* data() const;
 
@@ -51,6 +54,7 @@ class Tensor {
     scalar_t& at(const Shape& indices);
     const scalar_t& at(const Shape& indices) const;
 
+    Tensor contiguous() const;
     Tensor clone() const;
 
     Tensor& operator+=(const Tensor& other);

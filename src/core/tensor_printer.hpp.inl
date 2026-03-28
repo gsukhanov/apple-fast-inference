@@ -1,9 +1,5 @@
 #include "fastinf/core/tensor_printer.hpp"
 
-#include <sstream>
-#include <type_traits>
-
-
 namespace fastinf {
 template <DType _DType, DeviceLikeType _Device>
 std::string TensorPrinter<_DType, _Device>::format_scalar(
@@ -20,7 +16,8 @@ std::string TensorPrinter<_DType, _Device>::format_scalar(
     if constexpr (std::is_floating_point_v<scalar_type>) {
         oss << value;
         std::string s = oss.str();
-        if (s.find('.') == std::string::npos && s.find('e') == std::string::npos &&
+        if (s.find('.') == std::string::npos &&
+            s.find('e') == std::string::npos &&
             s.find('E') == std::string::npos) {
             s.push_back('.');
         }
@@ -34,10 +31,10 @@ std::string TensorPrinter<_DType, _Device>::format_scalar(
 template <DType _DType, DeviceLikeType _Device>
 template <class Iterator>
 void TensorPrinter<_DType, _Device>::print_nested(std::ostream& os,
-                                                   const Shape& shape,
-                                                   std::size_t dim,
-                                                   std::size_t indent,
-                                                   Iterator& it) {
+                                                  const Shape& shape,
+                                                  std::size_t dim,
+                                                  std::size_t indent,
+                                                  Iterator& it) {
     if (dim == shape.size()) {
         os << format_scalar(*it);
         ++it;
@@ -71,7 +68,7 @@ void TensorPrinter<_DType, _Device>::print_nested(std::ostream& os,
 
 template <DType _DType, DeviceLikeType _Device>
 std::ostream& TensorPrinter<_DType, _Device>::print(std::ostream& os,
-                                                     const view_t& view) {
+                                                    const view_t& view) {
     os << "tensor(";
 
     const auto& shape = view.shape();

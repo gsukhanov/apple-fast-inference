@@ -1,5 +1,4 @@
 #include "fastinf/core/tensor.hpp"
-#include "fastinf/core/tensor_printer.hpp"
 
 namespace fastinf {
 template <DType _DType, DeviceLikeType _Device>
@@ -13,14 +12,14 @@ typename Tensor<_DType, _Device>::Iterator Tensor<_DType, _Device>::end() {
 }
 
 template <DType _DType, DeviceLikeType _Device>
-typename Tensor<_DType, _Device>::ConstIterator
-Tensor<_DType, _Device>::begin() const {
+typename Tensor<_DType, _Device>::ConstIterator Tensor<_DType, _Device>::begin()
+    const {
     return ConstIterator(data_, &desc_);
 }
 
 template <DType _DType, DeviceLikeType _Device>
-typename Tensor<_DType, _Device>::ConstIterator
-Tensor<_DType, _Device>::end() const {
+typename Tensor<_DType, _Device>::ConstIterator Tensor<_DType, _Device>::end()
+    const {
     return ConstIterator(data_, &desc_, true);
 }
 
@@ -31,8 +30,8 @@ Tensor<_DType, _Device>::cbegin() const {
 }
 
 template <DType _DType, DeviceLikeType _Device>
-typename Tensor<_DType, _Device>::ConstIterator
-Tensor<_DType, _Device>::cend() const {
+typename Tensor<_DType, _Device>::ConstIterator Tensor<_DType, _Device>::cend()
+    const {
     return end();
 }
 
@@ -119,6 +118,11 @@ typename Tensor<_DType, _Device>::view_t Tensor<_DType, _Device>::view() const {
 }
 
 template <DType _DType, DeviceLikeType _Device>
+const Shape& Tensor<_DType, _Device>::shape() const {
+    return desc_.shape_;
+}
+
+template <DType _DType, DeviceLikeType _Device>
 typename Tensor<_DType, _Device>::scalar_t* Tensor<_DType, _Device>::data() {
     return data_;
 }
@@ -154,6 +158,20 @@ template <DType _DType, DeviceLikeType _Device>
 const typename Tensor<_DType, _Device>::scalar_t& Tensor<_DType, _Device>::at(
     const Shape& indices) const {
     return data_[offset_for(indices)];
+}
+
+template <DType _DType, DeviceLikeType _Device>
+Tensor<_DType, _Device> Tensor<_DType, _Device>::contiguous() const {
+    if (is_contiguous()) {
+        return *this;
+    }
+
+    Tensor result(shape(), scalar_t{});
+    for (auto it1 = this->begin(), it2 = result.begin(); it1 != this->end();
+         ++it1, ++it2) {
+        *it2 = *it1;
+    }
+    return result;
 }
 
 template <DType _DType, DeviceLikeType _Device>

@@ -2,7 +2,9 @@
 
 #include <cstddef>
 #include <ostream>
+#include <sstream>
 #include <string>
+#include <type_traits>
 
 #include "device.hpp"
 #include "dtype.hpp"
@@ -22,11 +24,8 @@ class TensorPrinter {
     static std::string format_scalar(const scalar_t& value);
 
     template <class Iterator>
-    static void print_nested(std::ostream& os,
-                             const Shape& shape,
-                             std::size_t dim,
-                             std::size_t indent,
-                             Iterator& it);
+    static void print_nested(std::ostream& os, const Shape& shape,
+                             std::size_t dim, std::size_t indent, Iterator& it);
 };
 
 };  // namespace fastinf
