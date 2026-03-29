@@ -8,18 +8,39 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 find_package(nlohmann_json REQUIRED)
 find_package(benchmark REQUIRED)
+find_package(OpenCV REQUIRED)
+find_package(GTest REQUIRED)
 
 add_library(${PROJECT_NAME}_objs INTERFACE)
 target_include_directories(${PROJECT_NAME}_objs INTERFACE
     ${CMAKE_CURRENT_SOURCE_DIR}/include
+    ${OpenCV_INCLUDE_DIRS}
 )
-target_link_libraries(${PROJECT_NAME}_objs INTERFACE nlohmann_json::nlohmann_json)
+target_link_libraries(${PROJECT_NAME}_objs INTERFACE
+    nlohmann_json::nlohmann_json
+    ${OpenCV_LIBS}
+)
 
 file(GLOB PROJECT_MAIN_SOURCE CONFIGURE_DEPENDS
     ${CMAKE_CURRENT_SOURCE_DIR}/src/main.cpp
 )
 add_executable(${PROJECT_NAME} ${PROJECT_MAIN_SOURCE})
 target_link_libraries(${PROJECT_NAME} PRIVATE ${PROJECT_NAME}_objs)
+
+file(GLOB_RECURSE PROJECT_TEST_SOURCES CONFIGURE_DEPENDS
+    ${CMAKE_CURRENT_SOURCE_DIR}/tests/*.cpp
+)
+add_executable(${PROJECT_NAME}_unittest ${PROJECT_TEST_SOURCES})
+get_target_property(GTEST_INCLUDE_DIRS GTest::gtest INTERFACE_INCLUDE_DIRECTORIES)
+if(GTEST_INCLUDE_DIRS)
+    target_include_directories(${PROJECT_NAME}_unittest BEFORE PRIVATE
+        ${GTEST_INCLUDE_DIRS}
+    )
+endif()
+target_link_libraries(${PROJECT_NAME}_unittest PRIVATE
+    ${PROJECT_NAME}_objs
+    GTest::gtest
+)
 
 file(GLOB_RECURSE PROJECT_BENCH_SOURCES CONFIGURE_DEPENDS
     ${CMAKE_CURRENT_SOURCE_DIR}/src/benchmark/*.cpp
