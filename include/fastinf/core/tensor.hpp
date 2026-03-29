@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <initializer_list>
 #include <iostream>
+#include <opencv2/core/mat.hpp>
 
 #include "device.hpp"
 #include "dtype.hpp"
@@ -31,6 +32,7 @@ class Tensor {
     Tensor(std::initializer_list<std::int64_t> shape,
            const scalar_t value = scalar_t{});
     Tensor(Shape shape, std::vector<scalar_t> data);
+    Tensor(const cv::Mat& m);
 
     Tensor(const Tensor& other);
     Tensor& operator=(const Tensor& other);

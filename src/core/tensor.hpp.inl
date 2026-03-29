@@ -1,6 +1,25 @@
 #include "fastinf/core/tensor.hpp"
 
 namespace fastinf {
+namespace {
+template <DType _DType>
+constexpr int cv_depth_for_dtype() {
+    if constexpr (_DType == DType::int8) {
+        return CV_8S;
+    } else if constexpr (_DType == DType::int16) {
+        return CV_16S;
+    } else if constexpr (_DType == DType::int32) {
+        return CV_32S;
+    } else if constexpr (_DType == DType::float32) {
+        return CV_32F;
+    } else if constexpr (_DType == DType::float64) {
+        return CV_64F;
+    } else {
+        return -1;
+    }
+}
+}  // namespace
+
 template <DType _DType, DeviceLikeType _Device>
 typename Tensor<_DType, _Device>::Iterator Tensor<_DType, _Device>::begin() {
     return Iterator(data_, &desc_);
@@ -59,6 +78,42 @@ Tensor<_DType, _Device>::Tensor(Shape shape, std::vector<scalar_t> data)
     for (std::size_t i = 0; i < n; ++i) {
         data_[i] = data[i];
     }
+}
+
+template <DType _DType, DeviceLikeType _Device>
+Tensor<_DType, _Device>::Tensor(const cv::Mat& m) {
+    constexpr int expected_depth = cv_depth_for_dtype<_DType>();
+    if constexpr (_DType == DType::int64) {
+        throw std::runtime_error(
+            "cv::Mat to Tensor<int64> conversion is not supported");
+    }
+
+    if (m.depth() != expected_depth) {
+        throw std::runtime_error("cv::Mat depth does not match Tensor dtype");
+    }
+
+    Shape shape;
+    if (m.dims == 2) {
+        shape = {1, static_cast<std::int64_t>(m.channels()),
+                 static_cast<std::int64_t>(m.rows),
+                 static_cast<std::int64_t>(m.cols)};
+    } else {
+        shape.reserve(static_cast<std::size_t>(m.dims) +
+                      (m.channels() > 1 ? 1 : 0));
+        for (int i = 0; i < m.dims; ++i) {
+            shape.push_back(static_cast<std::int64_t>(m.size[i]));
+        }
+        if (m.channels() > 1) {
+            shape.push_back(static_cast<std::int64_t>(m.channels()));
+        }
+    }
+
+    desc_ = TensorDesc(shape, make_contiguous_strides(shape));
+    const auto n = static_cast<std::size_t>(desc_.numel());
+    data_ = new scalar_t[n];
+
+    const cv::Mat src = m.isContinuous() ? m : m.clone();
+    std::copy_n(reinterpret_cast<const scalar_t*>(src.data), n, data_);
 }
 
 template <DType _DType, DeviceLikeType _Device>
