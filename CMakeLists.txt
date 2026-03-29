@@ -43,7 +43,7 @@ target_link_libraries(${PROJECT_NAME}_unittest PRIVATE
 )
 
 file(GLOB_RECURSE PROJECT_BENCH_SOURCES CONFIGURE_DEPENDS
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/benchmark/*.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/benchmarks/*.cpp
 )
 add_executable(${PROJECT_NAME}_benchmark ${PROJECT_BENCH_SOURCES})
 target_link_libraries(${PROJECT_NAME}_benchmark PRIVATE ${PROJECT_NAME}_objs benchmark::benchmark_main)
