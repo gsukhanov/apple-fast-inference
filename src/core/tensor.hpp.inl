@@ -222,8 +222,8 @@ Tensor<_DType, _Device> Tensor<_DType, _Device>::contiguous() const {
     }
 
     Tensor result(shape(), scalar_t{});
-    for (auto it1 = this->begin(), it2 = result.begin(); it1 != this->end();
-         ++it1, ++it2) {
+    auto it2 = result.begin();
+    for (auto it1 = this->begin(); it1 != this->end(); ++it1, ++it2) {
         *it2 = *it1;
     }
     return result;
@@ -427,19 +427,6 @@ Tensor<_DType, _Device> Tensor<_DType, _Device>::mul(
     throw std::runtime_error(
         "The size of tensor a and tensor b must be less than 3");
 }
-
-// template <>
-// Tensor<DType::float32, DeviceLikeType::neon>
-// Tensor<DType::float32, DeviceLikeType::neon>::mul(const Tensor&
-// other) const
-// {
-// }
-
-// template <>
-// Tensor<DType::float32, DeviceLikeType::amx>
-// Tensor<DType::float32, DeviceLikeType::amx>::mul(const Tensor& other)
-// const {
-// }
 
 template <DType _DType, DeviceLikeType _Device>
 std::size_t Tensor<_DType, _Device>::offset_for(const Shape& indices) const {

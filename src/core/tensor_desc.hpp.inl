@@ -1,15 +1,15 @@
 #include "fastinf/core/tensor_desc.hpp"
 
 namespace fastinf {
-TensorDesc::TensorDesc(Shape shape, Strides strides, std::int64_t offset)
+inline TensorDesc::TensorDesc(Shape shape, Strides strides, std::int64_t offset)
     : shape_(std::move(shape)), strides_(std::move(strides)), offset_(offset) {
 }
 
-int TensorDesc::dim() const {
+inline int TensorDesc::dim() const {
     return static_cast<int>(shape_.size());
 }
 
-std::int64_t TensorDesc::numel() const {
+inline std::int64_t TensorDesc::numel() const {
     if (shape_.empty()) {
         return 1;
     }

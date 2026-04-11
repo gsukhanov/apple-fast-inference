@@ -90,3 +90,4 @@ std::ostream& operator<<(std::ostream& os,
 };  // namespace fastinf
 
 #include "../../../src/core/tensor.hpp.inl"
+#include "../../../src/core/tensor_amx.hpp.inl"
