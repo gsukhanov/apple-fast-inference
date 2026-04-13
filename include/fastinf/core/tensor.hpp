@@ -3,7 +3,6 @@
 #include <algorithm>
 #include <initializer_list>
 #include <iostream>
-#include <opencv2/core/mat.hpp>
 
 #include "device.hpp"
 #include "dtype.hpp"
@@ -11,6 +10,10 @@
 #include "tensor_iterator.hpp"
 #include "tensor_printer.hpp"
 #include "tensor_view.hpp"
+
+#if FASTINF_HAS_OPENCV
+#include <opencv2/core/mat.hpp>
+#endif
 
 namespace fastinf {
 template <DType _DType, DeviceLikeType _Device = DeviceLikeType::cpu>
@@ -34,7 +37,9 @@ class Tensor {
            const scalar_t value = scalar_t{});
     Tensor(Shape shape, std::vector<scalar_t> data);
     explicit Tensor(const view_t& view);
+#if FASTINF_HAS_OPENCV
     Tensor(const cv::Mat& m);
+#endif
 
     Tensor(const Tensor& other);
     Tensor& operator=(const Tensor& other);
@@ -137,4 +142,6 @@ Tensor<_DType, _Device> operator*(
 };  // namespace fastinf
 
 #include "../../../src/core/tensor.hpp.inl"
+#if FASTINF_HAS_ACCELERATE
 #include "backend/amx/matmul.hpp"
+#endif

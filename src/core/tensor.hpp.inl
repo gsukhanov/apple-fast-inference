@@ -2,22 +2,35 @@
 
 namespace fastinf {
 namespace {
+#if FASTINF_HAS_OPENCV
 template <DType _DType>
-constexpr int cv_depth_for_dtype() {
-    if constexpr (_DType == DType::int8) {
-        return CV_8S;
-    } else if constexpr (_DType == DType::int16) {
-        return CV_16S;
-    } else if constexpr (_DType == DType::int32) {
-        return CV_32S;
-    } else if constexpr (_DType == DType::float32) {
-        return CV_32F;
-    } else if constexpr (_DType == DType::float64) {
-        return CV_64F;
-    } else {
-        return -1;
-    }
-}
+struct OpenCvTraits;
+
+template <>
+struct OpenCvTraits<DType::int8> {
+    static constexpr int depth = CV_8S;
+};
+
+template <>
+struct OpenCvTraits<DType::int16> {
+    static constexpr int depth = CV_16S;
+};
+
+template <>
+struct OpenCvTraits<DType::int32> {
+    static constexpr int depth = CV_32S;
+};
+
+template <>
+struct OpenCvTraits<DType::float32> {
+    static constexpr int depth = CV_32F;
+};
+
+template <>
+struct OpenCvTraits<DType::float64> {
+    static constexpr int depth = CV_64F;
+};
+#endif
 }  // namespace
 
 template <DType _DType, DeviceLikeType _Device>
@@ -92,8 +105,9 @@ Tensor<_DType, _Device>::Tensor(const view_t& view)
 }
 
 template <DType _DType, DeviceLikeType _Device>
+#if FASTINF_HAS_OPENCV
 Tensor<_DType, _Device>::Tensor(const cv::Mat& m) {
-    constexpr int expected_depth = cv_depth_for_dtype<_DType>();
+    constexpr int expected_depth = OpenCvTraits<_DType>::depth;
     if constexpr (_DType == DType::int64) {
         throw std::runtime_error(
             "cv::Mat to Tensor<int64> conversion is not supported");
@@ -126,6 +140,7 @@ Tensor<_DType, _Device>::Tensor(const cv::Mat& m) {
     const cv::Mat src = m.isContinuous() ? m : m.clone();
     std::copy_n(reinterpret_cast<const scalar_t*>(src.data), n, data_);
 }
+#endif
 
 template <DType _DType, DeviceLikeType _Device>
 Tensor<_DType, _Device>::Tensor(const Tensor& other) : desc_(other.desc_) {

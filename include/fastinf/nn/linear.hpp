@@ -42,4 +42,6 @@ class Linear : public Layer<_DType, _Device> {
 }  // namespace fastinf
 
 #include "../../../src/nn/linear.hpp.inl"
+#if FASTINF_HAS_ACCELERATE
 #include "backend/amx/linear.hpp"
+#endif

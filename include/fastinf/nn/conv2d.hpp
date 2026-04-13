@@ -56,4 +56,6 @@ class Conv2d : public Layer<_DType, _Device> {
 }  // namespace fastinf
 
 #include "../../../src/nn/conv2d.hpp.inl"
+#if FASTINF_HAS_ACCELERATE
 #include "backend/amx/conv2d.hpp"
+#endif
