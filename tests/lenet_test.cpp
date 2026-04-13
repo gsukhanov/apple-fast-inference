@@ -111,9 +111,3 @@ TEST(LeNet, test10_1) {
 
     ASSERT_TRUE(index == 1);
 }
-
-int main(int argc, char** argv) {
-    ::testing::InitGoogleTest(&argc, argv);
-
-    return RUN_ALL_TESTS();
-}

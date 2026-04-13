@@ -6,6 +6,8 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
+find_library(ACCELERATE_FRAMEWORK Accelerate)
+
 find_package(nlohmann_json REQUIRED)
 find_package(benchmark REQUIRED)
 find_package(OpenCV REQUIRED)
@@ -20,6 +22,16 @@ target_link_libraries(${PROJECT_NAME}_objs INTERFACE
     nlohmann_json::nlohmann_json
     ${OpenCV_LIBS}
 )
+
+if(APPLE AND ACCELERATE_FRAMEWORK)
+    target_link_libraries(${PROJECT_NAME}_objs INTERFACE
+        ${ACCELERATE_FRAMEWORK}
+    )
+
+    target_compile_definitions(${PROJECT_NAME}_objs INTERFACE
+        ACCELERATE_NEW_LAPACK
+    )
+endif()
 
 file(GLOB PROJECT_MAIN_SOURCE CONFIGURE_DEPENDS
     ${CMAKE_CURRENT_SOURCE_DIR}/src/main.cpp
@@ -39,7 +51,7 @@ if(GTEST_INCLUDE_DIRS)
 endif()
 target_link_libraries(${PROJECT_NAME}_unittest PRIVATE
     ${PROJECT_NAME}_objs
-    GTest::gtest
+    GTest::gtest_main
 )
 
 file(GLOB_RECURSE PROJECT_BENCH_SOURCES CONFIGURE_DEPENDS

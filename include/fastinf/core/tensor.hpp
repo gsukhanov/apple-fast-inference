@@ -7,6 +7,7 @@
 
 #include "device.hpp"
 #include "dtype.hpp"
+#include "ops.hpp"
 #include "tensor_iterator.hpp"
 #include "tensor_printer.hpp"
 #include "tensor_view.hpp"
@@ -32,6 +33,7 @@ class Tensor {
     Tensor(std::initializer_list<std::int64_t> shape,
            const scalar_t value = scalar_t{});
     Tensor(Shape shape, std::vector<scalar_t> data);
+    explicit Tensor(const view_t& view);
     Tensor(const cv::Mat& m);
 
     Tensor(const Tensor& other);
@@ -55,39 +57,84 @@ class Tensor {
 
     scalar_t& at(const Shape& indices);
     const scalar_t& at(const Shape& indices) const;
+    view_t slice(const Shape& indices) const;
 
     Tensor contiguous() const;
     Tensor clone() const;
+    view_t transpose(std::size_t dim0, std::size_t dim1) const;
+    view_t t() const;
 
     Tensor& operator+=(const Tensor& other);
     Tensor operator+(const Tensor& other) const;
+    Tensor& operator+=(const view_t& other);
+    Tensor operator+(const view_t& other) const;
     Tensor& operator+=(scalar_t scalar);
     Tensor operator+(scalar_t scalar) const;
 
     Tensor& operator-=(const Tensor& other);
     Tensor operator-(const Tensor& other) const;
+    Tensor& operator-=(const view_t& other);
+    Tensor operator-(const view_t& other) const;
     Tensor& operator-=(scalar_t scalar);
     Tensor operator-(scalar_t scalar) const;
 
     Tensor& operator*=(const Tensor& other);
     Tensor operator*(const Tensor& other) const;
+    Tensor& operator*=(const view_t& other);
+    Tensor operator*(const view_t& other) const;
     Tensor& operator*=(scalar_t scalar);
     Tensor operator*(scalar_t scalar) const;
 
     Tensor mul(const Tensor& other) const;
+    Tensor mul(const view_t& other) const;
 
  private:
     scalar_t* data_{nullptr};
     TensorDesc desc_;
-
-    std::size_t offset_for(const Shape& indices) const;
 };
 
 template <DType _DType, DeviceLikeType _Device = DeviceLikeType::cpu>
 std::ostream& operator<<(std::ostream& os,
                          const Tensor<_DType, _Device>& tensor);
 
+template <DType _DType, DeviceLikeType _Device>
+Tensor<_DType, _Device> operator+(const TensorView<_DType, _Device>& lhs,
+                                  const TensorView<_DType, _Device>& rhs);
+
+template <DType _DType, DeviceLikeType _Device>
+Tensor<_DType, _Device> operator+(
+    const TensorView<_DType, _Device>& input,
+    typename TensorView<_DType, _Device>::scalar_t scalar);
+
+template <DType _DType, DeviceLikeType _Device>
+Tensor<_DType, _Device> operator+(
+    typename TensorView<_DType, _Device>::scalar_t scalar,
+    const TensorView<_DType, _Device>& input);
+
+template <DType _DType, DeviceLikeType _Device>
+Tensor<_DType, _Device> operator-(const TensorView<_DType, _Device>& lhs,
+                                  const TensorView<_DType, _Device>& rhs);
+
+template <DType _DType, DeviceLikeType _Device>
+Tensor<_DType, _Device> operator-(
+    const TensorView<_DType, _Device>& input,
+    typename TensorView<_DType, _Device>::scalar_t scalar);
+
+template <DType _DType, DeviceLikeType _Device>
+Tensor<_DType, _Device> operator*(const TensorView<_DType, _Device>& lhs,
+                                  const TensorView<_DType, _Device>& rhs);
+
+template <DType _DType, DeviceLikeType _Device>
+Tensor<_DType, _Device> operator*(
+    const TensorView<_DType, _Device>& input,
+    typename TensorView<_DType, _Device>::scalar_t scalar);
+
+template <DType _DType, DeviceLikeType _Device>
+Tensor<_DType, _Device> operator*(
+    typename TensorView<_DType, _Device>::scalar_t scalar,
+    const TensorView<_DType, _Device>& input);
+
 };  // namespace fastinf
 
 #include "../../../src/core/tensor.hpp.inl"
-#include "../../../src/core/tensor_amx.hpp.inl"
+#include "backend/amx/matmul.hpp"
