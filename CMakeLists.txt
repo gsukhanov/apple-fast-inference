@@ -14,16 +14,11 @@ find_package(OpenCV REQUIRED)
 find_package(GTest REQUIRED)
 
 add_library(${PROJECT_NAME}_objs INTERFACE)
-target_include_directories(${PROJECT_NAME}_objs INTERFACE
-    ${CMAKE_CURRENT_SOURCE_DIR}/include
-    ${OpenCV_INCLUDE_DIRS}
-)
-target_link_libraries(${PROJECT_NAME}_objs INTERFACE
-    nlohmann_json::nlohmann_json
-    ${OpenCV_LIBS}
-)
-
 if(APPLE AND ACCELERATE_FRAMEWORK)
+    target_compile_options(${PROJECT_NAME}_objs INTERFACE
+        -Wno-deprecated-declarations
+    )
+
     target_link_libraries(${PROJECT_NAME}_objs INTERFACE
         ${ACCELERATE_FRAMEWORK}
     )
@@ -32,6 +27,14 @@ if(APPLE AND ACCELERATE_FRAMEWORK)
         ACCELERATE_NEW_LAPACK
     )
 endif()
+target_include_directories(${PROJECT_NAME}_objs INTERFACE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
+    ${OpenCV_INCLUDE_DIRS}
+)
+target_link_libraries(${PROJECT_NAME}_objs INTERFACE
+    nlohmann_json::nlohmann_json
+    ${OpenCV_LIBS}
+)
 
 file(GLOB PROJECT_MAIN_SOURCE CONFIGURE_DEPENDS
     ${CMAKE_CURRENT_SOURCE_DIR}/src/main.cpp

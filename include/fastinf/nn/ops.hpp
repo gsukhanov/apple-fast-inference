@@ -1,5 +1,6 @@
 #pragma once
 
+#include "ops/common.hpp"
 #include "ops/avg_pool2d.hpp"
 #include "ops/conv2d.hpp"
 #include "ops/flatten.hpp"

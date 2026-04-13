@@ -22,3 +22,4 @@ class ReLU : public Layer<_DType, _Device> {
 }  // namespace fastinf
 
 #include "../../../src/nn/relu.hpp.inl"
+#include "backend/amx/relu.hpp"

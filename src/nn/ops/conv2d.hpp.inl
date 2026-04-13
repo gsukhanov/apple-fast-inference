@@ -1,16 +1,15 @@
-#include "fastinf/nn/ops/conv2d.hpp"
-
 #include "fastinf/core/tensor.hpp"
+#include "fastinf/nn/ops/conv2d.hpp"
 
 namespace fastinf {
 namespace nn {
 template <DType _DType, DeviceLikeType _Device>
 Tensor<_DType, _Device> conv2d(
     const TensorView<_DType, _Device>& input,
-    const TensorView<_DType, _Device>& weight, std::int64_t stride_h,
-    std::int64_t stride_w, std::int64_t padding_h, std::int64_t padding_w,
-    std::int64_t dilation_h, std::int64_t dilation_w, std::int64_t groups,
-    std::optional<std::reference_wrapper<const TensorView<_DType, _Device>>> bias) {
+    const TensorView<_DType, _Device>& weight, size_2_t stride,
+    size_2_t padding, size_2_t dilation, std::int64_t groups,
+    std::optional<std::reference_wrapper<const TensorView<_DType, _Device>>>
+        bias) {
     if (input.dim() != 4) {
         throw std::invalid_argument("Input tensor must be 4D [N, C, H, W]");
     }
@@ -38,8 +37,7 @@ Tensor<_DType, _Device> conv2d(
         throw std::invalid_argument("Input channels do not match Conv2d");
     }
     if (out_channels % groups != 0) {
-        throw std::invalid_argument(
-            "Out channels must be divisible by groups");
+        throw std::invalid_argument("Out channels must be divisible by groups");
     }
     if (bias.has_value()) {
         const auto& bias_view = bias->get();
@@ -49,15 +47,16 @@ Tensor<_DType, _Device> conv2d(
     }
 
     const std::int64_t out_h =
-        (in_h + 2 * padding_h - dilation_h * (kernel_h - 1) - 1) / stride_h + 1;
+        (in_h + 2 * padding.h - dilation.h * (kernel_h - 1) - 1) / stride.h + 1;
     const std::int64_t out_w =
-        (in_w + 2 * padding_w - dilation_w * (kernel_w - 1) - 1) / stride_w + 1;
+        (in_w + 2 * padding.w - dilation.w * (kernel_w - 1) - 1) / stride.w + 1;
     if (out_h <= 0 || out_w <= 0) {
         throw std::invalid_argument("Calculated output size is invalid");
     }
 
-    Tensor<_DType, _Device> output({batch_size, out_channels, out_h, out_w},
-                                   typename Tensor<_DType, _Device>::scalar_t{});
+    Tensor<_DType, _Device> output(
+        {batch_size, out_channels, out_h, out_w},
+        typename Tensor<_DType, _Device>::scalar_t{});
 
     const std::int64_t out_channels_per_group = out_channels / groups;
 
@@ -69,22 +68,23 @@ Tensor<_DType, _Device> conv2d(
             for (std::int64_t oh = 0; oh < out_h; ++oh) {
                 for (std::int64_t ow = 0; ow < out_w; ++ow) {
                     typename Tensor<_DType, _Device>::scalar_t acc{};
-                    const auto h_start = (oh * stride_h) - padding_h;
-                    const auto w_start = (ow * stride_w) - padding_w;
+                    const auto h_start = (oh * stride.h) - padding.h;
+                    const auto w_start = (ow * stride.w) - padding.w;
 
                     for (std::int64_t ic = 0; ic < channels_per_group; ++ic) {
                         for (std::int64_t kh = 0; kh < kernel_h; ++kh) {
-                            const auto ih = h_start + kh * dilation_h;
+                            const auto ih = h_start + kh * dilation.h;
                             if (ih < 0 || ih >= in_h) {
                                 continue;
                             }
                             for (std::int64_t kw = 0; kw < kernel_w; ++kw) {
-                                const auto iw = w_start + kw * dilation_w;
+                                const auto iw = w_start + kw * dilation.w;
                                 if (iw < 0 || iw >= in_w) {
                                     continue;
                                 }
 
-                                acc += input.at({n, in_group_offset + ic, ih, iw}) *
+                                acc += input.at(
+                                           {n, in_group_offset + ic, ih, iw}) *
                                        weight.at({oc, ic, kh, kw});
                             }
                         }

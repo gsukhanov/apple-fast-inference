@@ -113,15 +113,14 @@ typename Conv2d<_DType, _Device>::tensor_t Conv2d<_DType, _Device>::forward(
     const auto input_view = input.view();
     const auto weight_view = weight_.view();
     if (!use_bias_) {
-        return nn::conv2d<_DType, _Device>(
-            input_view, weight_view, stride_.h, stride_.w, padding_.h,
-            padding_.w, dilation_.h, dilation_.w, groups_);
+        return nn::conv2d<_DType, _Device>(input_view, weight_view, stride_,
+                                           padding_, dilation_, groups_);
     }
 
     const auto bias_view = bias_.view();
-    return nn::conv2d<_DType, _Device>(
-        input_view, weight_view, stride_.h, stride_.w, padding_.h, padding_.w,
-        dilation_.h, dilation_.w, groups_, std::cref(bias_view));
+    return nn::conv2d<_DType, _Device>(input_view, weight_view, stride_,
+                                       padding_, dilation_, groups_,
+                                       std::cref(bias_view));
 }
 
 template <DType _DType, DeviceLikeType _Device>

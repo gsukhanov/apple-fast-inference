@@ -2,6 +2,7 @@
 
 #include "fastinf/core/device.hpp"
 #include "fastinf/core/dtype.hpp"
+#include "fastinf/nn/ops/common.hpp"
 
 namespace fastinf {
 template <DType _DType, DeviceLikeType _Device>
@@ -13,12 +14,8 @@ class TensorView;
 namespace nn {
 template <DType _DType, DeviceLikeType _Device>
 Tensor<_DType, _Device> avg_pool2d(const TensorView<_DType, _Device>& input,
-                                   std::int64_t kernel_h,
-                                   std::int64_t kernel_w,
-                                   std::int64_t stride_h,
-                                   std::int64_t stride_w,
-                                   std::int64_t padding_h,
-                                   std::int64_t padding_w);
+                                   size_2_t kernel, size_2_t stride,
+                                   size_2_t padding);
 }  // namespace nn
 }  // namespace fastinf
 

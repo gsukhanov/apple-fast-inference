@@ -31,9 +31,8 @@ std::string AvgPool2d<_DType, _Device>::name() const {
 template <DType _DType, DeviceLikeType _Device>
 typename AvgPool2d<_DType, _Device>::tensor_t
 AvgPool2d<_DType, _Device>::forward(const tensor_t& input) const {
-    return nn::avg_pool2d<_DType, _Device>(
-        input.view(), kernel_.h, kernel_.w, stride_.h, stride_.w, padding_.h,
-        padding_.w);
+    return nn::avg_pool2d<_DType, _Device>(input.view(), kernel_, stride_,
+                                           padding_);
 }
 
 template <DType _DType, DeviceLikeType _Device>
