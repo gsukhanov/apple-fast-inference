@@ -3,6 +3,7 @@
 #include <algorithm>
 
 #include "layer.hpp"
+#include "ops.hpp"
 
 namespace fastinf {
 namespace nn {
@@ -21,3 +22,6 @@ class ReLU : public Layer<_DType, _Device> {
 }  // namespace fastinf
 
 #include "../../../src/nn/relu.hpp.inl"
+#if FASTINF_HAS_ACCELERATE
+#include "backend/amx/relu.hpp"
+#endif

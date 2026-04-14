@@ -17,9 +17,9 @@ static void BM_LeNetFloat32CPU(benchmark::State& state) {
 }
 
 static void BM_LeNetFloat32CPUBatch5(benchmark::State& state) {
-    LeNet<DType::float64, DeviceLikeType::cpu> model;
+    LeNet<DType::float32, DeviceLikeType::cpu> model;
 
-    Tensor<DType::float64, DeviceLikeType::cpu> tensor({5, 1, 28, 28}, 1);
+    Tensor<DType::float32, DeviceLikeType::cpu> tensor({5, 1, 28, 28}, 1);
 
     for (auto _ : state) {
         benchmark::DoNotOptimize(model(tensor));

@@ -7,6 +7,7 @@
 #include <vector>
 
 #include "layer.hpp"
+#include "ops.hpp"
 
 namespace fastinf {
 namespace nn {
@@ -15,9 +16,7 @@ class AvgPool2d : public Layer<_DType, _Device> {
  public:
     using tensor_t = Tensor<_DType, _Device>;
     using scalar_t = typename DTypeTraits<_DType>::type;
-    struct size_2_t {
-        std::int64_t h, w;
-    };
+    using size_2_t = nn::size_2_t;
 
     AvgPool2d(size_2_t kernel, size_2_t stride = {1, 1},
               size_2_t padding = {0, 0});

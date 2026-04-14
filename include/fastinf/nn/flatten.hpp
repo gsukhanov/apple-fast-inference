@@ -1,6 +1,7 @@
 #pragma once
 
 #include "layer.hpp"
+#include "ops.hpp"
 
 namespace fastinf {
 namespace nn {

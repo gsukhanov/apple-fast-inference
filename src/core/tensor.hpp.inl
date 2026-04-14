@@ -2,22 +2,35 @@
 
 namespace fastinf {
 namespace {
+#if FASTINF_HAS_OPENCV
 template <DType _DType>
-constexpr int cv_depth_for_dtype() {
-    if constexpr (_DType == DType::int8) {
-        return CV_8S;
-    } else if constexpr (_DType == DType::int16) {
-        return CV_16S;
-    } else if constexpr (_DType == DType::int32) {
-        return CV_32S;
-    } else if constexpr (_DType == DType::float32) {
-        return CV_32F;
-    } else if constexpr (_DType == DType::float64) {
-        return CV_64F;
-    } else {
-        return -1;
-    }
-}
+struct OpenCvTraits;
+
+template <>
+struct OpenCvTraits<DType::int8> {
+    static constexpr int depth = CV_8S;
+};
+
+template <>
+struct OpenCvTraits<DType::int16> {
+    static constexpr int depth = CV_16S;
+};
+
+template <>
+struct OpenCvTraits<DType::int32> {
+    static constexpr int depth = CV_32S;
+};
+
+template <>
+struct OpenCvTraits<DType::float32> {
+    static constexpr int depth = CV_32F;
+};
+
+template <>
+struct OpenCvTraits<DType::float64> {
+    static constexpr int depth = CV_64F;
+};
+#endif
 }  // namespace
 
 template <DType _DType, DeviceLikeType _Device>
@@ -81,8 +94,20 @@ Tensor<_DType, _Device>::Tensor(Shape shape, std::vector<scalar_t> data)
 }
 
 template <DType _DType, DeviceLikeType _Device>
+Tensor<_DType, _Device>::Tensor(const view_t& view)
+    : desc_(view.shape(), make_contiguous_strides(view.shape())) {
+    const auto n = static_cast<std::size_t>(desc_.numel());
+    data_ = new scalar_t[n];
+    auto it = view.begin();
+    for (std::size_t i = 0; i < n; ++i, ++it) {
+        data_[i] = *it;
+    }
+}
+
+template <DType _DType, DeviceLikeType _Device>
+#if FASTINF_HAS_OPENCV
 Tensor<_DType, _Device>::Tensor(const cv::Mat& m) {
-    constexpr int expected_depth = cv_depth_for_dtype<_DType>();
+    constexpr int expected_depth = OpenCvTraits<_DType>::depth;
     if constexpr (_DType == DType::int64) {
         throw std::runtime_error(
             "cv::Mat to Tensor<int64> conversion is not supported");
@@ -115,6 +140,7 @@ Tensor<_DType, _Device>::Tensor(const cv::Mat& m) {
     const cv::Mat src = m.isContinuous() ? m : m.clone();
     std::copy_n(reinterpret_cast<const scalar_t*>(src.data), n, data_);
 }
+#endif
 
 template <DType _DType, DeviceLikeType _Device>
 Tensor<_DType, _Device>::Tensor(const Tensor& other) : desc_(other.desc_) {
@@ -206,13 +232,19 @@ int Tensor<_DType, _Device>::dim() const {
 template <DType _DType, DeviceLikeType _Device>
 typename Tensor<_DType, _Device>::scalar_t& Tensor<_DType, _Device>::at(
     const Shape& indices) {
-    return data_[offset_for(indices)];
+    return view().at(indices);
 }
 
 template <DType _DType, DeviceLikeType _Device>
 const typename Tensor<_DType, _Device>::scalar_t& Tensor<_DType, _Device>::at(
     const Shape& indices) const {
-    return data_[offset_for(indices)];
+    return view().at(indices);
+}
+
+template <DType _DType, DeviceLikeType _Device>
+typename Tensor<_DType, _Device>::view_t Tensor<_DType, _Device>::slice(
+    const Shape& indices) const {
+    return view().slice(indices);
 }
 
 template <DType _DType, DeviceLikeType _Device>
@@ -222,8 +254,8 @@ Tensor<_DType, _Device> Tensor<_DType, _Device>::contiguous() const {
     }
 
     Tensor result(shape(), scalar_t{});
-    for (auto it1 = this->begin(), it2 = result.begin(); it1 != this->end();
-         ++it1, ++it2) {
+    auto it2 = result.begin();
+    for (auto it1 = this->begin(); it1 != this->end(); ++it1, ++it2) {
         *it2 = *it1;
     }
     return result;
@@ -235,25 +267,39 @@ Tensor<_DType, _Device> Tensor<_DType, _Device>::clone() const {
 }
 
 template <DType _DType, DeviceLikeType _Device>
+typename Tensor<_DType, _Device>::view_t Tensor<_DType, _Device>::transpose(
+    std::size_t dim0, std::size_t dim1) const {
+    return view().transpose(dim0, dim1);
+}
+
+template <DType _DType, DeviceLikeType _Device>
+typename Tensor<_DType, _Device>::view_t Tensor<_DType, _Device>::t() const {
+    return view().t();
+}
+
+template <DType _DType, DeviceLikeType _Device>
 Tensor<_DType, _Device>& Tensor<_DType, _Device>::operator+=(
     const Tensor& other) {
-    if (desc_.numel() != other.desc_.numel()) {
-        throw std::runtime_error(
-            "The size of tensor a must match the size of tensor b at "
-            "non-singleton dimension");
-    }
-    std::for_each(begin(), end(),
-                  [it2 = other.begin()](auto& a) mutable { a += *it2++; });
+    return *this += other.view();
+}
 
+template <DType _DType, DeviceLikeType _Device>
+Tensor<_DType, _Device>& Tensor<_DType, _Device>::operator+=(
+    const view_t& other) {
+    view() += other;
     return *this;
 }
 
 template <DType _DType, DeviceLikeType _Device>
 Tensor<_DType, _Device> Tensor<_DType, _Device>::operator+(
     const Tensor& other) const {
-    Tensor result = clone();
-    result += other;
-    return result;
+    return view() + other.view();
+}
+
+template <DType _DType, DeviceLikeType _Device>
+Tensor<_DType, _Device> Tensor<_DType, _Device>::operator+(
+    const view_t& other) const {
+    return view() + other;
 }
 
 template <DType _DType, DeviceLikeType _Device>
@@ -274,23 +320,26 @@ Tensor<_DType, _Device> Tensor<_DType, _Device>::operator+(
 template <DType _DType, DeviceLikeType _Device>
 Tensor<_DType, _Device>& Tensor<_DType, _Device>::operator-=(
     const Tensor& other) {
-    if (desc_.numel() != other.desc_.numel()) {
-        throw std::runtime_error(
-            "The size of tensor a must match the size of tensor b at "
-            "non-singleton dimension");
-    }
-    std::for_each(begin(), end(),
-                  [it2 = other.begin()](auto& a) mutable { a -= *it2++; });
+    return *this -= other.view();
+}
 
+template <DType _DType, DeviceLikeType _Device>
+Tensor<_DType, _Device>& Tensor<_DType, _Device>::operator-=(
+    const view_t& other) {
+    view() -= other;
     return *this;
 }
 
 template <DType _DType, DeviceLikeType _Device>
 Tensor<_DType, _Device> Tensor<_DType, _Device>::operator-(
     const Tensor& other) const {
-    Tensor result = clone();
-    result -= other;
-    return result;
+    return view() - other.view();
+}
+
+template <DType _DType, DeviceLikeType _Device>
+Tensor<_DType, _Device> Tensor<_DType, _Device>::operator-(
+    const view_t& other) const {
+    return view() - other;
 }
 
 template <DType _DType, DeviceLikeType _Device>
@@ -311,23 +360,26 @@ Tensor<_DType, _Device> Tensor<_DType, _Device>::operator-(
 template <DType _DType, DeviceLikeType _Device>
 Tensor<_DType, _Device>& Tensor<_DType, _Device>::operator*=(
     const Tensor& other) {
-    if (desc_.numel() != other.desc_.numel()) {
-        throw std::runtime_error(
-            "The size of tensor a must match the size of tensor b at "
-            "non-singleton dimension");
-    }
-    std::for_each(begin(), end(),
-                  [it2 = other.begin()](auto& a) mutable { a *= *it2++; });
+    return *this *= other.view();
+}
 
+template <DType _DType, DeviceLikeType _Device>
+Tensor<_DType, _Device>& Tensor<_DType, _Device>::operator*=(
+    const view_t& other) {
+    view() *= other;
     return *this;
 }
 
 template <DType _DType, DeviceLikeType _Device>
 Tensor<_DType, _Device> Tensor<_DType, _Device>::operator*(
     const Tensor& other) const {
-    Tensor result = clone();
-    result *= other;
-    return result;
+    return view() * other.view();
+}
+
+template <DType _DType, DeviceLikeType _Device>
+Tensor<_DType, _Device> Tensor<_DType, _Device>::operator*(
+    const view_t& other) const {
+    return view() * other;
 }
 
 template <DType _DType, DeviceLikeType _Device>
@@ -348,112 +400,78 @@ Tensor<_DType, _Device> Tensor<_DType, _Device>::operator*(
 template <DType _DType, DeviceLikeType _Device>
 Tensor<_DType, _Device> Tensor<_DType, _Device>::mul(
     const Tensor& other) const {
-    if (dim() == 1 && other.dim() == 1) {
-        if (desc_.shape_[0] != other.desc_.shape_[0]) {
-            throw std::runtime_error(
-                "The size of tensor a must match the size of tensor b "
-                "at "
-                "non-singleton dimension 0");
-        }
-        scalar_t acc{};
-        for (std::int64_t i = 0; i < desc_.shape_[0]; ++i) {
-            acc += at({i}) * other.at({i});
-        }
-
-        return Tensor({}, std::vector<scalar_t>{acc});
-    }
-
-    if (dim() == 2 && other.dim() == 1) {
-        if (desc_.shape_[1] != other.desc_.shape_[0]) {
-            throw std::runtime_error(
-                "The size of tensor a must match the size of tensor b "
-                "at "
-                "non-singleton dimension");
-        }
-
-        Tensor result({desc_.shape_[0]}, scalar_t{});
-        for (std::int64_t i = 0; i < desc_.shape_[0]; ++i) {
-            scalar_t acc{};
-            for (std::int64_t k = 0; k < desc_.shape_[1]; ++k) {
-                acc += at({i, k}) * other.at({k});
-            }
-            result.at({i}) = acc;
-        }
-
-        return result;
-    }
-
-    if (dim() == 1 && other.dim() == 2) {
-        if (desc_.shape_[0] != other.desc_.shape_[0]) {
-            throw std::runtime_error(
-                "The size of tensor a must match the size of tensor b "
-                "at "
-                "non-singleton dimension");
-        }
-        Tensor result({other.desc_.shape_[1]}, scalar_t{});
-        for (std::int64_t j = 0; j < other.desc_.shape_[1]; ++j) {
-            scalar_t acc{};
-            for (std::int64_t i = 0; i < desc_.shape_[0]; ++i) {
-                acc += at({i}) * other.at({i, j});
-            }
-            result.at({j}) = acc;
-        }
-
-        return result;
-    }
-
-    if (dim() == 2 && other.dim() == 2) {
-        if (desc_.shape_[1] != other.desc_.shape_[0]) {
-            throw std::runtime_error(
-                "The size of tensor a must match the size of tensor b "
-                "at "
-                "non-singleton dimension");
-        }
-
-        Tensor result({desc_.shape_[0], other.desc_.shape_[1]}, scalar_t{});
-        for (std::int64_t i = 0; i < desc_.shape_[0]; ++i) {
-            for (std::int64_t j = 0; j < other.desc_.shape_[1]; ++j) {
-                scalar_t acc{};
-                for (std::int64_t k = 0; k < desc_.shape_[1]; ++k) {
-                    acc += at({i, k}) * other.at({k, j});
-                }
-                result.at({i, j}) = acc;
-            }
-        }
-
-        return result;
-    }
-
-    throw std::runtime_error(
-        "The size of tensor a and tensor b must be less than 3");
+    return view().mul(other.view());
 }
 
-// template <>
-// Tensor<DType::float32, DeviceLikeType::neon>
-// Tensor<DType::float32, DeviceLikeType::neon>::mul(const Tensor&
-// other) const
-// {
-// }
-
-// template <>
-// Tensor<DType::float32, DeviceLikeType::amx>
-// Tensor<DType::float32, DeviceLikeType::amx>::mul(const Tensor& other)
-// const {
-// }
+template <DType _DType, DeviceLikeType _Device>
+Tensor<_DType, _Device> Tensor<_DType, _Device>::mul(
+    const view_t& other) const {
+    return view().mul(other);
+}
 
 template <DType _DType, DeviceLikeType _Device>
-std::size_t Tensor<_DType, _Device>::offset_for(const Shape& indices) const {
-    if (indices.size() != desc_.shape_.size()) {
-        throw std::out_of_range("too many indices for tensor of dimension");
-    }
-    size_t offset = desc_.offset_;
-    for (size_t i = 0; i < desc_.shape_.size(); ++i) {
-        if (indices[i] < 0 || indices[i] >= desc_.shape_[i]) {
-            throw std::out_of_range("index is out of bounds for dimension");
-        }
-        offset += indices[i] * desc_.strides_[i];
-    }
-    return offset;
+TensorView<_DType, _Device>& TensorView<_DType, _Device>::operator=(
+    const Tensor<_DType, _Device>& other) {
+    return *this = other.view();
+}
+
+template <DType _DType, DeviceLikeType _Device>
+Tensor<_DType, _Device> operator+(const TensorView<_DType, _Device>& lhs,
+                                  const TensorView<_DType, _Device>& rhs) {
+    return add<_DType, _Device>(lhs, rhs);
+}
+
+template <DType _DType, DeviceLikeType _Device>
+Tensor<_DType, _Device> operator+(
+    const TensorView<_DType, _Device>& input,
+    typename TensorView<_DType, _Device>::scalar_t scalar) {
+    return add<_DType, _Device>(input, scalar);
+}
+
+template <DType _DType, DeviceLikeType _Device>
+Tensor<_DType, _Device> operator+(
+    typename TensorView<_DType, _Device>::scalar_t scalar,
+    const TensorView<_DType, _Device>& input) {
+    return add<_DType, _Device>(input, scalar);
+}
+
+template <DType _DType, DeviceLikeType _Device>
+Tensor<_DType, _Device> operator-(const TensorView<_DType, _Device>& lhs,
+                                  const TensorView<_DType, _Device>& rhs) {
+    return sub<_DType, _Device>(lhs, rhs);
+}
+
+template <DType _DType, DeviceLikeType _Device>
+Tensor<_DType, _Device> operator-(
+    const TensorView<_DType, _Device>& input,
+    typename TensorView<_DType, _Device>::scalar_t scalar) {
+    return sub<_DType, _Device>(input, scalar);
+}
+
+template <DType _DType, DeviceLikeType _Device>
+Tensor<_DType, _Device> operator*(const TensorView<_DType, _Device>& lhs,
+                                  const TensorView<_DType, _Device>& rhs) {
+    return multiply<_DType, _Device>(lhs, rhs);
+}
+
+template <DType _DType, DeviceLikeType _Device>
+Tensor<_DType, _Device> operator*(
+    const TensorView<_DType, _Device>& input,
+    typename TensorView<_DType, _Device>::scalar_t scalar) {
+    return multiply<_DType, _Device>(input, scalar);
+}
+
+template <DType _DType, DeviceLikeType _Device>
+Tensor<_DType, _Device> operator*(
+    typename TensorView<_DType, _Device>::scalar_t scalar,
+    const TensorView<_DType, _Device>& input) {
+    return multiply<_DType, _Device>(input, scalar);
+}
+
+template <DType _DType, DeviceLikeType _Device>
+Tensor<_DType, _Device> TensorView<_DType, _Device>::mul(
+    const TensorView& other) const {
+    return matmul<_DType, _Device>(*this, other);
 }
 
 template <DType _DType, DeviceLikeType _Device>

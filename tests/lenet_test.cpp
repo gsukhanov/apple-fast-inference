@@ -1,5 +1,7 @@
 #include <gtest/gtest.h>
+#if FASTINF_HAS_OPENCV
 #include <opencv2/opencv.hpp>
+#endif
 
 #include "fastinf/core.hpp"
 #include "fastinf/nn.hpp"
@@ -7,6 +9,7 @@
 using namespace fastinf;
 using namespace fastinf::nn;
 
+#if FASTINF_HAS_OPENCV
 int classNum(const std::string& input_file, const std::string& weight) {
     cv::Mat image = cv::imread(input_file, cv::IMREAD_GRAYSCALE);
     if (image.empty()) {
@@ -111,9 +114,4 @@ TEST(LeNet, test10_1) {
 
     ASSERT_TRUE(index == 1);
 }
-
-int main(int argc, char** argv) {
-    ::testing::InitGoogleTest(&argc, argv);
-
-    return RUN_ALL_TESTS();
-}
+#endif

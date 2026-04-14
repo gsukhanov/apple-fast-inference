@@ -62,34 +62,22 @@ bool Linear<_DType, _Device>::load_state(const layer_state_t& state) {
 template <DType _DType, DeviceLikeType _Device>
 typename Linear<_DType, _Device>::tensor_t Linear<_DType, _Device>::forward(
     const tensor_t& input) const {
-    if (input.dim() != 2) {
-        throw std::invalid_argument("Linear expects 2D input [N, in_features]");
+    if (weight_.shape() != Shape{out_features_, in_features_}) {
+        throw std::invalid_argument("Linear weight shape mismatch");
+    }
+    if (use_bias_ && bias_.shape() != Shape{out_features_}) {
+        throw std::invalid_argument("Linear bias shape mismatch");
     }
 
-    const auto& shape = input.shape();
-    const auto batch = shape[0];
-    const auto in_features = shape[1];
-
-    if (in_features != in_features_) {
-        throw std::invalid_argument("Input features do not match Linear layer");
+    const auto input_view = input.view();
+    const auto weight_view = weight_.view();
+    if (!use_bias_) {
+        return nn::linear<_DType, _Device>(input_view, weight_view);
     }
 
-    tensor_t output({batch, out_features_}, scalar_t{});
-
-    for (std::int64_t n = 0; n < batch; ++n) {
-        for (std::int64_t o = 0; o < out_features_; ++o) {
-            scalar_t acc{};
-            for (std::int64_t i = 0; i < in_features_; ++i) {
-                acc += input.at({n, i}) * weight_.at({o, i});
-            }
-            if (use_bias_) {
-                acc += bias_.at({o});
-            }
-            output.at({n, o}) = acc;
-        }
-    }
-
-    return output;
+    const auto bias_view = bias_.view();
+    return nn::linear<_DType, _Device>(input_view, weight_view,
+                                       std::cref(bias_view));
 }
 
 template <DType _DType, DeviceLikeType _Device>

@@ -10,12 +10,7 @@ std::string ReLU<_DType, _Device>::name() const {
 template <DType _DType, DeviceLikeType _Device>
 typename ReLU<_DType, _Device>::tensor_t ReLU<_DType, _Device>::forward(
     const tensor_t& input) const {
-    tensor_t output = input.clone();
-    for (auto& el : output) {
-        el = std::max(el, scalar_t{});
-    }
-
-    return output;
+    return nn::relu<_DType, _Device>(input.view());
 }
 
 }  // namespace nn

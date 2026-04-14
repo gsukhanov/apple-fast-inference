@@ -31,62 +31,8 @@ std::string AvgPool2d<_DType, _Device>::name() const {
 template <DType _DType, DeviceLikeType _Device>
 typename AvgPool2d<_DType, _Device>::tensor_t
 AvgPool2d<_DType, _Device>::forward(const tensor_t& input) const {
-    if (input.dim() != 4) {
-        throw std::invalid_argument("Input tensor must be 4D [N, C, H, W]");
-    }
-
-    const auto& in_shape = input.shape();
-    const auto batch_size = in_shape[0];
-    const auto channels = in_shape[1];
-    const auto in_h = in_shape[2];
-    const auto in_w = in_shape[3];
-
-    const std::int64_t out_h = output_height(in_h);
-    const std::int64_t out_w = output_width(in_w);
-    if (out_h <= 0 || out_w <= 0) {
-        throw std::invalid_argument("Calculated output size is invalid");
-    }
-
-    tensor_t output({batch_size, channels, out_h, out_w}, scalar_t{});
-
-    for (std::int64_t n = 0; n < batch_size; ++n) {
-        for (std::int64_t c = 0; c < channels; ++c) {
-            for (std::int64_t oh = 0; oh < out_h; ++oh) {
-                for (std::int64_t ow = 0; ow < out_w; ++ow) {
-                    const auto h_start = oh * stride_.h - padding_.h;
-                    const auto w_start = ow * stride_.w - padding_.w;
-
-                    scalar_t sum = 0;
-                    std::int64_t valid_count = 0;
-
-                    for (std::int64_t kh = 0; kh < kernel_.h; ++kh) {
-                        const auto ih = h_start + kh;
-                        if (ih < 0 || ih >= in_h) {
-                            continue;
-                        }
-                        for (std::int64_t kw = 0; kw < kernel_.w; ++kw) {
-                            const auto iw = w_start + kw;
-                            if (iw < 0 || iw >= in_w) {
-                                continue;
-                            }
-
-                            sum += input.at({n, c, ih, iw});
-                            ++valid_count;
-                        }
-                    }
-
-                    if (valid_count == 0) {
-                        continue;
-                    }
-
-                    output.at({n, c, oh, ow}) = static_cast<scalar_t>(
-                        static_cast<double>(sum) / valid_count);
-                }
-            }
-        }
-    }
-
-    return output;
+    return nn::avg_pool2d<_DType, _Device>(input.view(), kernel_, stride_,
+                                           padding_);
 }
 
 template <DType _DType, DeviceLikeType _Device>
