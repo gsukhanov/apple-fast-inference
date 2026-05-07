@@ -1,9 +1,11 @@
-#import "../../../shared/typst/core.typ": paragraph, project-name, project-name-english, project-summary, project-type
+#import "../../../shared/typst/core-erguchev.typ": (
+    paragraph, project-name, project-name-english, project-summary, project-type,
+)
 
 = ТРЕБОВАНИЯ К ПРОГРАММНОЙ ДОКУМЕНТАЦИИ
 
 #paragraph[
-  На испытание должна быть представлена документация в следующем составе:
+    На испытание должна быть представлена документация в следующем составе:
 ]
 
 1. "#project-name()". Техническое задание (ГОСТ 19.201-78 [7]).

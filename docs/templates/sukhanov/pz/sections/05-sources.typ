@@ -1,4 +1,4 @@
-#import "../../../shared/typst/core.typ": paragraph, project-name, project-name-english, project-summary, project-type
+#import "../../../shared/typst/core-sukhanov.typ": paragraph, project-name, project-name-english, project-summary, project-type
 
 = ПРИЛОЖЕНИЕ 1. СПИСОК ИСПОЛЬЗУЕМОЙ ЛИТЕРАТУРЫ
 

@@ -1,4 +1,4 @@
-#import "../../../shared/typst/core.typ": paragraph, project-name, project-name-english, project-summary, project-type
+#import "../../../shared/typst/core-erguchev.typ": paragraph, project-name, project-name-english, project-summary, project-type
 
 = УСЛОВИЯ ВЫПОЛНЕНИЯ ПРОГРАММЫ
 

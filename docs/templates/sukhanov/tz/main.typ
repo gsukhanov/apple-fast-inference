@@ -1,7 +1,7 @@
 #import "../../template.typ": template
 #import "cfg.typ": cfg
 #import "body.typ": render
-#import "../../data.typ": data
+#import "data.typ": data
 
 #let personal = (
     number: "2",

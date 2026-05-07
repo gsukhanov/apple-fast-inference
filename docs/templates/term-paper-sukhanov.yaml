@@ -12,11 +12,6 @@ project:
 student:
     name: Г. А. Суханов
     group: БПИ241
-students:
-    - name: А. Д. Ергучев
-      group: БПИ241
-    - name: Г. А. Суханов
-      group: БПИ241
 supervisor:
     name: Е. Е. Лимонова
     position: Научный руководитель, научный сотрудник ФИЦ ИУ РАН

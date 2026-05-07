@@ -1,6 +1,6 @@
 #import "core-base.typ": create-core
 
-#let core = create-core(yaml("../../term-paper.yaml"))
+#let core = create-core(yaml("../../term-paper-sukhanov.yaml"))
 
 #let project-name() = (core.project_name)()
 #let project-name-english() = (core.project_name_english)()

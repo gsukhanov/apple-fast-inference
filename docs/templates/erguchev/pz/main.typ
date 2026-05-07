@@ -1,4 +1,4 @@
-#import "../../shared/typst/core.typ": render-document
+#import "../../shared/typst/core-erguchev.typ": render-document
 
 #show: body => render-document("pz", body)
 

@@ -1,4 +1,4 @@
-#import "../../shared/typst/core.typ": project-name, project-name-english, project-summary
+#import "../../shared/typst/core-sukhanov.typ": project-name, project-name-english, project-summary
 
 #include "sections/01-object.typ"
 #include "sections/02-goals.typ"
