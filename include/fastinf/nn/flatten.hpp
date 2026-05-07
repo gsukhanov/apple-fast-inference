@@ -1,0 +1,22 @@
+#pragma once
+
+#include "layer.hpp"
+#include "ops.hpp"
+
+namespace fastinf {
+namespace nn {
+template <DType _DType, DeviceLikeType _Device = DeviceLikeType::cpu>
+class Flatten : public Layer<_DType, _Device> {
+ public:
+    using tensor_t = Tensor<_DType, _Device>;
+    using scalar_t = typename DTypeTraits<_DType>::type;
+
+    Flatten() = default;
+
+    std::string name() const override;
+    tensor_t forward(const tensor_t& input) const override;
+};
+}  // namespace nn
+}  // namespace fastinf
+
+#include "../../../src/nn/flatten.hpp.inl"
