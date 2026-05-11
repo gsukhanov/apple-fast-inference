@@ -5,7 +5,7 @@
 
 #include "fastinf/core.hpp"
 #include "fastinf/nn.hpp"
-#include "fastinf/nn/conv_im2col.hpp"
+#include "fastinf/nn/backend/neon/conv2d.hpp"
 
 using namespace fastinf;
 using namespace fastinf::nn;

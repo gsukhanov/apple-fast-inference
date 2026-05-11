@@ -6,7 +6,7 @@
 #include <type_traits>
 #include <vector>
 
-#include "layer.hpp"
+#include "fastinf/nn/layer.hpp"
 
 namespace fastinf {
 namespace nn {
