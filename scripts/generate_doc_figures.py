@@ -16,9 +16,12 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_BENCHMARK = REPO_ROOT / "build" / "fastinf_benchmark"
 DEFAULT_OUTPUT_DIR = REPO_ROOT / "docs" / "static" / "generated"
 
-BENCHMARK_RE = re.compile(
+TENSOR_MUL_RE = re.compile(
     r"BM_TensorMul<\s*DType::(?P<dtype>[^,>]+),\s*DeviceLikeType::(?P<device>[^>]+)>"
     r"/(?P<m>\d+)/(?P<k>\d+)/(?P<n>\d+)"
+)
+LENET_RE = re.compile(
+    r"BM_LeNet(?P<dtype>Float32|Float64)(?P<device>Greedy|CPU|AMX)/(?P<batch>\d+)"
 )
 
 
@@ -33,9 +36,12 @@ class BenchmarkPoint:
     real_time_ns: float
     cpu_time_ns: float
     items_per_second: float | None
+    label: str | None = None
 
     @property
     def shape(self) -> str:
+        if self.label is not None:
+            return self.label
         return f"{self.m}x{self.k} * {self.k}x{self.n}"
 
     @property
@@ -127,30 +133,60 @@ def extract_points(results: dict) -> list[BenchmarkPoint]:
             continue
 
         name = bench.get("run_name") or bench.get("name") or ""
-        match = BENCHMARK_RE.search(name)
-        if not match:
+        tensor_mul_match = TENSOR_MUL_RE.search(name)
+        lenet_match = LENET_RE.search(name)
+        if tensor_mul_match:
+            points.append(
+                BenchmarkPoint(
+                    name=name,
+                    dtype=tensor_mul_match.group("dtype"),
+                    device=tensor_mul_match.group("device"),
+                    m=int(tensor_mul_match.group("m")),
+                    k=int(tensor_mul_match.group("k")),
+                    n=int(tensor_mul_match.group("n")),
+                    real_time_ns=float(bench["real_time"]),
+                    cpu_time_ns=float(bench["cpu_time"]),
+                    items_per_second=(
+                        float(bench["items_per_second"])
+                        if "items_per_second" in bench
+                        else None
+                    ),
+                )
+            )
             continue
 
-        points.append(
-            BenchmarkPoint(
-                name=name,
-                dtype=match.group("dtype"),
-                device=match.group("device"),
-                m=int(match.group("m")),
-                k=int(match.group("k")),
-                n=int(match.group("n")),
-                real_time_ns=float(bench["real_time"]),
-                cpu_time_ns=float(bench["cpu_time"]),
-                items_per_second=(
-                    float(bench["items_per_second"])
-                    if "items_per_second" in bench
-                    else None
-                ),
+        if lenet_match:
+            dtype = {
+                "Float32": "float32",
+                "Float64": "float64",
+            }[lenet_match.group("dtype")]
+            device = {
+                "CPU": "cpu",
+                "Greedy": "greedy",
+                "AMX": "amx",
+            }[lenet_match.group("device")]
+            batch = int(lenet_match.group("batch"))
+            points.append(
+                BenchmarkPoint(
+                    name=name,
+                    dtype=dtype,
+                    device=device,
+                    m=batch,
+                    k=1,
+                    n=28 * 28,
+                    real_time_ns=float(bench["real_time"]),
+                    cpu_time_ns=float(bench["cpu_time"]),
+                    items_per_second=(
+                        float(bench["items_per_second"])
+                        if "items_per_second" in bench
+                        else None
+                    ),
+                    label=f"batch={batch}",
+                )
             )
-        )
 
     if not points:
-        raise ValueError("No TensorMul benchmark results were found in the JSON data.")
+        raise ValueError("No TensorMul or LeNet benchmark results were found in the JSON data.")
 
     return sorted(points, key=lambda p: (p.dtype, p.m, p.k, p.n, p.device))
 
@@ -202,21 +238,16 @@ def write_csv(points: Iterable[BenchmarkPoint], output_dir: Path) -> Path:
 def write_typst_snippet(output_dir: Path) -> Path:
     output_path = output_dir / "README.typ"
     content = """// Generated documentation figures.
-// Add the needed lines to a Typst template section that contains a TODO.
+// Add the needed lines to a Typst template section.
 
 #figure(
   image("../../static/generated/cpu_amx_latency.svg", width: 100%),
+  caption: [Сравнение времени выполнения CPU Conv2d, Greedy im2col и AMX Conv2d],
+)
+
+#figure(
+  image("../../static/generated/cpu_amx_matmul_latency.svg", width: 100%),
   caption: [Сравнение времени выполнения матричного умножения CPU и AMX],
-)
-
-#figure(
-  image("../../static/generated/cpu_amx_speedup.svg", width: 100%),
-  caption: [Коэффициент ускорения AMX относительно CPU],
-)
-
-#figure(
-  image("../../static/generated/cpu_amx_throughput.svg", width: 100%),
-  caption: [Сравнение пропускной способности CPU и AMX],
 )
 """
     output_path.write_text(content, encoding="utf-8")
@@ -224,7 +255,14 @@ def write_typst_snippet(output_dir: Path) -> Path:
 
 
 def grouped_labels(points: list[BenchmarkPoint]) -> list[tuple[str, str]]:
-    labels = sorted({(p.dtype, p.shape) for p in points})
+    labels: list[tuple[str, str]] = []
+    seen: set[tuple[str, str]] = set()
+    for point in sorted(points, key=lambda p: (p.dtype, p.m, p.k, p.n)):
+        key = (point.dtype, point.shape)
+        if key in seen:
+            continue
+        seen.add(key)
+        labels.append(key)
     return labels
 
 
@@ -232,21 +270,9 @@ def device_value_map(points: list[BenchmarkPoint], metric: str) -> dict[tuple[st
     values: dict[tuple[str, str], dict[str, float]] = {}
     for point in points:
         key = (point.dtype, point.shape)
-        values.setdefault(key, {})[point.device] = getattr(point, metric)
+        value = getattr(point, metric)
+        values.setdefault(key, {})[point.device] = 0.0 if value is None else value
     return values
-
-
-def speedup_points(points: list[BenchmarkPoint]) -> list[tuple[str, float]]:
-    values = device_value_map(points, "latency_ms")
-    result: list[tuple[str, float]] = []
-    for dtype, shape in grouped_labels(points):
-        by_device = values.get((dtype, shape), {})
-        cpu = by_device.get("cpu")
-        amx = by_device.get("amx")
-        if cpu is None or amx is None or amx == 0:
-            continue
-        result.append((f"{dtype}\\n{shape}", cpu / amx))
-    return result
 
 
 def nice_max(value: float) -> float:
@@ -429,54 +455,86 @@ def render_single_bar_chart(
     )
 
 
-def generate_charts(points: list[BenchmarkPoint], output_dir: Path) -> list[Path]:
-    labels = [f"{dtype}\\n{shape}" for dtype, shape in grouped_labels(points)]
+def make_latency_series(
+    points: list[BenchmarkPoint],
+    devices: list[str],
+    names: dict[str, str],
+    colors: dict[str, str],
+) -> list[tuple[str, list[float], str]]:
     latency_by_device = device_value_map(points, "latency_ms")
-    throughput_by_device = device_value_map(points, "gops")
+    return [
+        (
+            names.get(device, device),
+            [
+                latency_by_device.get((dtype, shape), {}).get(device, 0.0)
+                for dtype, shape in grouped_labels(points)
+            ],
+            colors.get(device, "#4b5563"),
+        )
+        for device in devices
+    ]
 
-    cpu_latency = []
-    amx_latency = []
-    cpu_throughput = []
-    amx_throughput = []
-    for dtype, shape in grouped_labels(points):
-        cpu_latency.append(latency_by_device.get((dtype, shape), {}).get("cpu", 0.0))
-        amx_latency.append(latency_by_device.get((dtype, shape), {}).get("amx", 0.0))
-        cpu_throughput.append(throughput_by_device.get((dtype, shape), {}).get("cpu", 0.0))
-        amx_throughput.append(throughput_by_device.get((dtype, shape), {}).get("amx", 0.0))
 
-    latency_path = output_dir / "cpu_amx_latency.svg"
-    speedup_path = output_dir / "cpu_amx_speedup.svg"
-    throughput_path = output_dir / "cpu_amx_throughput.svg"
-
+def generate_lenet_latency_chart(points: list[BenchmarkPoint], output_dir: Path) -> Path:
+    labels = [f"{dtype}\\n{shape}" for dtype, shape in grouped_labels(points)]
+    path = output_dir / "cpu_amx_latency.svg"
     render_grouped_bar_chart(
-        latency_path,
+        path,
+        "Время выполнения инференса LeNet",
+        "Время, мс (логарифмическая шкала)",
+        labels,
+        make_latency_series(
+            points,
+            ["cpu", "greedy", "amx"],
+            {
+                "cpu": "CPU Conv2d",
+                "greedy": "Greedy im2col",
+                "amx": "AMX Conv2d",
+            },
+            {
+                "cpu": "#2563eb",
+                "greedy": "#f59e0b",
+                "amx": "#dc2626",
+            },
+        ),
+    )
+    return path
+
+
+def generate_matmul_latency_chart(points: list[BenchmarkPoint], output_dir: Path) -> Path:
+    labels = [f"{dtype}\\n{shape}" for dtype, shape in grouped_labels(points)]
+    path = output_dir / "cpu_amx_matmul_latency.svg"
+    render_grouped_bar_chart(
+        path,
         "Время выполнения матричного умножения CPU и AMX",
         "Время, мс (логарифмическая шкала)",
         labels,
-        [
-            ("CPU/NEON", cpu_latency, "#2563eb"),
-            ("AMX", amx_latency, "#dc2626"),
-        ],
+        make_latency_series(
+            points,
+            ["cpu", "amx"],
+            {
+                "cpu": "CPU/NEON",
+                "amx": "AMX",
+            },
+            {
+                "cpu": "#2563eb",
+                "amx": "#dc2626",
+            },
+        ),
     )
-    render_single_bar_chart(
-        speedup_path,
-        "Ускорение AMX относительно CPU",
-        "Ускорение, раз (логарифмическая шкала)",
-        speedup_points(points),
-        "#059669",
-    )
-    render_grouped_bar_chart(
-        throughput_path,
-        "Пропускная способность матричного умножения CPU и AMX",
-        "Гигаопераций/с (логарифмическая шкала)",
-        labels,
-        [
-            ("CPU/NEON", cpu_throughput, "#2563eb"),
-            ("AMX", amx_throughput, "#dc2626"),
-        ],
-    )
+    return path
 
-    return [latency_path, speedup_path, throughput_path]
+
+def generate_charts(points: list[BenchmarkPoint], output_dir: Path) -> list[Path]:
+    lenet_points = [point for point in points if point.label is not None]
+    matmul_points = [point for point in points if point.label is None]
+
+    generated: list[Path] = []
+    if lenet_points:
+        generated.append(generate_lenet_latency_chart(lenet_points, output_dir))
+    if matmul_points:
+        generated.append(generate_matmul_latency_chart(matmul_points, output_dir))
+    return generated
 
 
 def main() -> int:
