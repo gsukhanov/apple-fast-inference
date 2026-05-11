@@ -100,8 +100,8 @@ void runLeNetBenchmark(benchmark::State& state) {
     state.SetLabel("batch=" + std::to_string(batch_size));
 }
 
-static void BM_LeNetFloat32Greedy(benchmark::State& state) {
-    runLeNetBenchmark<Im2ColLeNet<DType::float32, DeviceLikeType::cpu>>(state);
+static void BM_LeNetFloat32Neon(benchmark::State& state) {
+    runLeNetBenchmark<Im2ColLeNet<DType::float32, DeviceLikeType::neon>>(state);
 }
 
 static void BM_LeNetFloat32CPU(benchmark::State& state) {
@@ -115,7 +115,7 @@ static void BM_LeNetFloat32AMX(benchmark::State& state) {
 #endif
 }  // namespace
 
-BENCHMARK(BM_LeNetFloat32Greedy)->Arg(1)->Arg(5)->Arg(10);
+BENCHMARK(BM_LeNetFloat32Neon)->Arg(1)->Arg(5)->Arg(10);
 BENCHMARK(BM_LeNetFloat32CPU)->Arg(1)->Arg(5)->Arg(10);
 #if FASTINF_HAS_ACCELERATE
 BENCHMARK(BM_LeNetFloat32AMX)->Arg(1)->Arg(5)->Arg(10);

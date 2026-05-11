@@ -8,8 +8,10 @@
 
 #if FASTINF_HAS_NEON
 #include "fastinf/core/backend/neon/matmul.hpp"
+#include "fastinf/nn/backend/neon/conv2d.hpp"
 
 using namespace fastinf;
+using namespace fastinf::nn;
 
 namespace {
 using NeonI8Tensor = Tensor<DType::int8, DeviceLikeType::neon>;
@@ -127,6 +129,55 @@ TEST(NeonMatmul, MatrixMatrixAcrossKernelBlocks) {
             }
             EXPECT_EQ(result.at({i, j}), requantize(expected));
         }
+    }
+}
+
+TEST(NeonConv2d, Im2ColMatchesCpuConv2dWithBias) {
+    Tensor<DType::float32, DeviceLikeType::cpu> cpu_input(
+        {1, 2, 4, 4},
+        {
+            1.0F,  2.0F,  3.0F,  4.0F,
+            5.0F,  6.0F,  7.0F,  8.0F,
+            9.0F,  10.0F, 11.0F, 12.0F,
+            13.0F, 14.0F, 15.0F, 16.0F,
+            -1.0F, -2.0F, -3.0F, -4.0F,
+            -5.0F, -6.0F, -7.0F, -8.0F,
+            -9.0F, -10.0F, -11.0F, -12.0F,
+            -13.0F, -14.0F, -15.0F, -16.0F,
+        });
+    Tensor<DType::float32, DeviceLikeType::cpu> cpu_weight(
+        {3, 2, 3, 3},
+        {
+            0.25F, 0.0F, -0.25F, 0.5F, 0.0F, -0.5F, 0.25F, 0.0F, -0.25F,
+            0.1F,  0.2F, 0.3F,   0.0F, 0.1F, 0.2F,  0.3F,  0.0F, 0.1F,
+            -0.3F, 0.2F, 0.1F,   0.4F, 0.0F, -0.4F, 0.1F,  0.2F, -0.3F,
+            0.2F,  -0.2F, 0.2F,  -0.2F, 0.2F, -0.2F, 0.2F,  -0.2F, 0.2F,
+            0.05F, 0.1F, 0.15F,  0.2F, 0.25F, 0.3F, 0.35F, 0.4F, 0.45F,
+            -0.1F, -0.2F, -0.3F, 0.3F, 0.2F, 0.1F,  -0.1F, 0.0F, 0.1F,
+        });
+    Tensor<DType::float32, DeviceLikeType::cpu> cpu_bias({3},
+                                                        {0.5F, -1.0F, 2.0F});
+
+    Tensor<DType::float32, DeviceLikeType::neon> neon_input(
+        cpu_input.shape(), std::vector<float>(cpu_input.begin(), cpu_input.end()));
+    Tensor<DType::float32, DeviceLikeType::neon> neon_weight(
+        cpu_weight.shape(),
+        std::vector<float>(cpu_weight.begin(), cpu_weight.end()));
+    Tensor<DType::float32, DeviceLikeType::neon> neon_bias(
+        cpu_bias.shape(), std::vector<float>(cpu_bias.begin(), cpu_bias.end()));
+
+    const auto cpu_bias_view = cpu_bias.view();
+    const auto neon_bias_view = neon_bias.view();
+    auto cpu_result = conv2d<DType::float32, DeviceLikeType::cpu>(
+        cpu_input.view(), cpu_weight.view(), {2, 1}, {1, 1}, {1, 1}, 1,
+        std::cref(cpu_bias_view));
+    auto neon_result = conv2d<DType::float32, DeviceLikeType::neon>(
+        neon_input.view(), neon_weight.view(), {2, 1}, {1, 1}, {1, 1}, 1,
+        std::cref(neon_bias_view));
+
+    ASSERT_EQ(neon_result.shape(), cpu_result.shape());
+    for (std::int64_t i = 0; i < cpu_result.desc().numel(); ++i) {
+        EXPECT_NEAR(neon_result.data()[i], cpu_result.data()[i], 1e-5F);
     }
 }
 #endif

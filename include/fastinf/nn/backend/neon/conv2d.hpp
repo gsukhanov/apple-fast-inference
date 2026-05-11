@@ -7,6 +7,7 @@
 #include <vector>
 
 #include "fastinf/nn/layer.hpp"
+#include "fastinf/nn/ops/conv2d.hpp"
 
 namespace fastinf {
 namespace nn {
@@ -16,9 +17,7 @@ public:
     using tensor_t = Tensor<_DType, _Device>;
     using scalar_t = typename DTypeTraits<_DType>::type;
     using layer_state_t = typename Layer<_DType, _Device>::layer_state_t;
-    struct size_2_t {
-        std::int64_t h, w;
-    };
+    using size_2_t = nn::size_2_t;
 
     ConvIm2Col(std::int64_t in_channels, std::int64_t out_channels, size_2_t kernel,
            size_2_t stride = {1, 1}, size_2_t padding = {0, 0},
