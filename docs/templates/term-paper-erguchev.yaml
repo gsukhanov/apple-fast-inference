@@ -1,0 +1,37 @@
+# term-paper project configuration
+# Положите основной ТЗ в директорию inputs.tz_dir
+# Если нужен командный ПМИ, положите командное ТЗ в ./input/tz-team
+# Положите архивы кода или папки репозиториев в директорию inputs.code_dir
+# В inputs.notes_file можно добавить дополнительные требования, скриншоты и замечания
+project:
+    name: Быстрая реализация вещественных и квантованных сверточных нейронных сетей на мобильных устройствах Apple
+    english_name: Fast Implementation of Floating-Point and Quantized Convolutional Neural Networks on Apple Mobile Devices
+    code: "04.06"
+    summary: Программный проект по созданию высокопроизводительной реализации сверточных нейронных сетей на устройствах Apple Silicon. В рамках работы сравниваются CPU- и AMX-исполнения, поддерживаются вещественные и квантованные представления различной разрядности, а целевой архитектурой выступает VGG-уровень для задач компьютерного зрения.
+    type: CNN inference API library
+student:
+    name: А. Д. Ергучев
+    group: БПИ241
+supervisor:
+    name: Е. Е. Лимонова
+    position: Научный руководитель, научный сотрудник ФИЦ ИУ РАН
+approver:
+    name: Н. А. Павлочев
+    position: Академический руководитель образовательной программы "Программная инженерия", старший преподаватель Департамента программной инженерии
+organization:
+    name: |-
+        ПРАВИТЕЛЬСТВО РОССИЙСКОЙ ФЕДЕРАЦИИ
+        ФЕДЕРАЛЬНОЕ ГОСУДАРСТВЕННОЕ АВТОНОМНОЕ
+        ОБРАЗОВАТЕЛЬНОЕ УЧРЕЖДЕНИЕ ВЫСШЕГО ОБРАЗОВАНИЯ
+        НАЦИОНАЛЬНЫЙ ИССЛЕДОВАТЕЛЬСКИЙ УНИВЕРСИТЕТ
+        "ВЫСШАЯ ШКОЛА ЭКОНОМИКИ"
+inputs:
+    code_dir: ./input/code
+    tz_dir: ./input/tz
+    notes_file: ./input/notes.txt
+    source_priority: balanced
+ai:
+    provider: openrouter
+    base_url: https://openrouter.ai/api/v1
+    model: google/gemma-4-31b-it
+    api_key: ""
