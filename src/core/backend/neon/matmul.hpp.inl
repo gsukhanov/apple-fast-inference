@@ -17,13 +17,13 @@ struct Mapper;
 
 template <>
 struct Mapper<DType::int8> {
-    DType accType = DType::int32;
+    static constexpr DType accType = DType::int32;
     using vType = int8x16_t;
 };
 
 template <>
 struct Mapper<DType::int16> {
-    DType accType = DType::int64;
+    static constexpr DType accType = DType::int64;
     using vType = int16x8_t;
 };
 
@@ -233,7 +233,7 @@ inline void KernelVxM(int32_t* dst_data, int8_t* rhs_data, int8_t* lhs_data) {
         "st1 {%[dst_1].4s}, [%[dst_ptr]]\n"
         "st1 {%[dst_2].4s}, [%[dst_ptr], #16]\n"
 
-        : [lhs_ptr] "+r" (lhs_data), [rhs_ptr] "+r" (rhs_data), [dst_ptr] "+r" (dst_data)
+        : [lhs_ptr] "+r" (lhs_data), [rhs_ptr] "+r" (rhs_data), [dst_ptr] "+r" (dst_data),
 
         [lhs_1] "=w" (lhs_register_1), [lhs_2] "=w" (lhs_register_2),
         [lhs_3] "=w" (lhs_register_3), [lhs_4] "=w" (lhs_register_4),
@@ -433,7 +433,7 @@ inline void KernelMxM(int32_t* dst_data, int8_t* lhs_data, int8_t* rhs_data) {
         [dst_3] "=w" (dst_register_3), [dst_4] "=w" (dst_register_4),
         [dst_5] "=w" (dst_register_5), [dst_6] "=w" (dst_register_6),
         [dst_7] "=w" (dst_register_7), [dst_8] "=w" (dst_register_8),
-        [dst_9] "=w" (dst_register_9)
+        [dst_9] "=w" (dst_register_9),
 
         [dst_ptr] "+r" (dst_data)
         :: "memory"
@@ -449,69 +449,176 @@ Tensor<_IntDType, DeviceLikeType::neon> matmul(
     const QuantizeDesc<_IntDType, _FloatDType> rhs_qdesc) {
     using tensor_t = Tensor<_IntDType, DeviceLikeType::neon>;
     using scalar_t = typename DTypeTraits<_IntDType>::type;
-    using accum_t  = typename DTypeTraits<Mapper<_IntDType>::accType>::type;
-
-    scalar_t scalar_max = DTypeTraits<_IntDType>::max;
-    accum_t accum_max = DTypeTraits<Mapper<_IntDType>::accType>::max;
+    using accum_t = typename DTypeTraits<Mapper<_IntDType>::accType>::type;
+    using accum_tensor_t =
+        Tensor<Mapper<_IntDType>::accType, DeviceLikeType::neon>;
+    using float_t = typename DTypeTraits<_FloatDType>::type;
 
     tensor_t lhs_tmp, rhs_tmp;
     scalar_t* lhs_data = backend::ensure_contiguous_data(lhs, lhs_tmp);
     scalar_t* rhs_data = backend::ensure_contiguous_data(rhs, rhs_tmp);
+    (void)lhs_data;
+    (void)rhs_data;
 
-    // since we quantize with zero-point 0, we don't really care about it
-    // todo: actually consider zero-point
-
-    if (lhs.dim() == 1 && rhs.dim() == 1) {
-        if (lhs.shape()[0] != rhs.shape()[0]) {
-            throw std::runtime_error(
-                "The size of tensor a must match the size of tensor b "
-                "at non-singleton dimension 0");
-        }
-
-        // Here we expect vectors to be already padded with zeroes
-        int n = static_cast<int>(lhs.shape()[0]);
-        accum_t lacc = 0;
-        float_t scale = (lhs_qdesc.scale * scalar_max) * (rhs_qdesc.scale * scalar_max) / accum_max;
-        for (int i = 0; i < n; ++i) lacc += lhs.at{i} * rhs.at{i}
-        tensor_t result({}, std::vector<accum_t>{lacc});
-        return rescale(std::make_pair(result, QuantizeDesc(0, scale)))
+    if (lhs.dim() > 2 || rhs.dim() > 2) {
+        throw std::runtime_error(
+            "The size of tensor a and tensor b must be less than 3");
     }
 
-    if (lhs.dim() == 2 && rhs.dim() == 1) {
-        if (lhs.shape()[1] != rhs.shape()[0]) {
-            throw std::runtime_error(
-                "The size of tensor a must match the size of tensor b "
-                "at non-singleton dimension");
+    const bool lhs_is_vector = lhs.dim() == 1;
+    const bool rhs_is_vector = rhs.dim() == 1;
+    const std::int64_t m = lhs_is_vector ? 1 : lhs.shape()[0];
+    const std::int64_t k_lhs = lhs_is_vector ? lhs.shape()[0] : lhs.shape()[1];
+    const std::int64_t k_rhs = rhs_is_vector ? rhs.shape()[0] : rhs.shape()[0];
+    const std::int64_t n = rhs_is_vector ? 1 : rhs.shape()[1];
+
+    if (k_lhs != k_rhs) {
+        throw std::runtime_error(
+            "The size of tensor a must match the size of tensor b "
+            "at non-singleton dimension");
+    }
+
+    Shape result_shape;
+    if (lhs_is_vector && rhs_is_vector) {
+        result_shape = Shape{};
+    } else if (rhs_is_vector) {
+        result_shape = Shape{m};
+    } else if (lhs_is_vector) {
+        result_shape = Shape{n};
+    } else {
+        result_shape = Shape{m, n};
+    }
+
+    accum_tensor_t accum_matrix(Shape{m, n}, accum_t{0});
+
+    for (std::int64_t l2_row = 0; l2_row < m; l2_row += L2_BLOCK_WIDTH) {
+        const std::int64_t l2_row_end =
+            std::min<std::int64_t>(l2_row + L2_BLOCK_WIDTH, m);
+        for (std::int64_t l2_col = 0; l2_col < n; l2_col += L2_BLOCK_WIDTH) {
+            const std::int64_t l2_col_end =
+                std::min<std::int64_t>(l2_col + L2_BLOCK_WIDTH, n);
+            for (std::int64_t l2_depth = 0; l2_depth < k_lhs;
+                 l2_depth += L2_BLOCK_DEPTH) {
+                const std::int64_t l2_depth_end =
+                    std::min<std::int64_t>(l2_depth + L2_BLOCK_DEPTH, k_lhs);
+
+                for (std::int64_t l1_row = l2_row; l1_row < l2_row_end;
+                     l1_row += L1_BLOCK_WIDTH) {
+                    const std::int64_t l1_row_end =
+                        std::min<std::int64_t>(l1_row + L1_BLOCK_WIDTH,
+                                               l2_row_end);
+                    for (std::int64_t l1_col = l2_col; l1_col < l2_col_end;
+                         l1_col += L1_BLOCK_WIDTH) {
+                        const std::int64_t l1_col_end =
+                            std::min<std::int64_t>(l1_col + L1_BLOCK_WIDTH,
+                                                   l2_col_end);
+                        for (std::int64_t l1_depth = l2_depth;
+                             l1_depth < l2_depth_end;
+                             l1_depth += L1_BLOCK_DEPTH) {
+                            const std::int64_t l1_depth_end =
+                                std::min<std::int64_t>(
+                                    l1_depth + L1_BLOCK_DEPTH, l2_depth_end);
+
+                            for (std::int64_t row = l1_row; row < l1_row_end;
+                                 row += KERNEL_RESULT_WIDTH) {
+                                const std::int64_t row_end =
+                                    std::min<std::int64_t>(
+                                        row + KERNEL_RESULT_WIDTH, l1_row_end);
+                                for (std::int64_t col = l1_col;
+                                     col < l1_col_end;
+                                     col += KERNEL_RESULT_WIDTH) {
+                                    const std::int64_t col_end =
+                                        std::min<std::int64_t>(
+                                            col + KERNEL_RESULT_WIDTH,
+                                            l1_col_end);
+                                    for (std::int64_t depth = l1_depth;
+                                         depth < l1_depth_end;
+                                         depth += KERNEL_DEPTH) {
+                                        const std::int64_t depth_end =
+                                            std::min<std::int64_t>(
+                                                depth + KERNEL_DEPTH,
+                                                l1_depth_end);
+
+                                        for (std::int64_t i = row;
+                                             i < row_end; ++i) {
+                                            for (std::int64_t j = col;
+                                                 j < col_end; ++j) {
+                                                accum_t sum = accum_t{0};
+                                                for (std::int64_t kk = depth;
+                                                     kk < depth_end; ++kk) {
+                                                    const scalar_t lhs_value =
+                                                        lhs_is_vector
+                                                            ? lhs.at(Shape{kk})
+                                                            : lhs.at(
+                                                                  Shape{i, kk});
+                                                    const scalar_t rhs_value =
+                                                        rhs_is_vector
+                                                            ? rhs.at(Shape{kk})
+                                                            : rhs.at(
+                                                                  Shape{kk, j});
+                                                    sum += static_cast<accum_t>(
+                                                               lhs_value -
+                                                               lhs_qdesc
+                                                                   .zero_point) *
+                                                           static_cast<accum_t>(
+                                                               rhs_value -
+                                                               rhs_qdesc
+                                                                   .zero_point);
+                                                }
+                                                accum_matrix.at(Shape{i, j}) +=
+                                                    sum;
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         }
+    }
 
-        //todo
+    auto packed_accum = pack_result(accum_matrix);
+    auto unpacked_accum = unpack_result(packed_accum, Shape{m, n});
 
+    const float_t output_scale =
+        lhs_qdesc.scale * rhs_qdesc.scale *
+        static_cast<float_t>(DTypeTraits<_IntDType>::max);
+    auto accum_pair = std::make_pair(
+        unpacked_accum,
+        QuantizeDesc<_IntDType, _FloatDType>(0, output_scale));
+    auto scaled_pair =
+        rescale<Mapper<_IntDType>::accType, _IntDType, _FloatDType>(
+            accum_pair);
+    tensor_t scaled_matrix = std::move(scaled_pair.first);
+
+    if (result_shape.empty()) {
+        tensor_t result(result_shape, scalar_t{0});
+        result.at(Shape{}) = scaled_matrix.at(Shape{0, 0});
+        if (scaled_matrix.quantization().has_value()) {
+            result.set_quantization(*scaled_matrix.quantization());
+        }
         return result;
     }
 
-    if (lhs.dim() == 1 && rhs.dim() == 2) {
-        if (lhs.shape()[0] != rhs.shape()[0]) {
-            throw std::runtime_error(
-                "The size of tensor a must match the size of tensor b "
-                "at non-singleton dimension");
+    if (result_shape.size() == 1) {
+        tensor_t result(result_shape, scalar_t{0});
+        if (rhs_is_vector) {
+            for (std::int64_t i = 0; i < m; ++i) {
+                result.at(Shape{i}) = scaled_matrix.at(Shape{i, 0});
+            }
+        } else {
+            for (std::int64_t j = 0; j < n; ++j) {
+                result.at(Shape{j}) = scaled_matrix.at(Shape{0, j});
+            }
         }
-
-        //todo
+        if (scaled_matrix.quantization().has_value()) {
+            result.set_quantization(*scaled_matrix.quantization());
+        }
         return result;
     }
 
-    if (lhs.dim() == 2 && rhs.dim() == 2) {
-        if (lhs.shape()[1] != rhs.shape()[0]) {
-            throw std::runtime_error(
-                "The size of tensor a must match the size of tensor b "
-                "at non-singleton dimension");
-        }
-
-        //todo
-        return result;
-    }
-
-    throw std::runtime_error(
-        "The size of tensor a and tensor b must be less than 3");
+    return scaled_matrix;
 }
 }  // namespace fastinf

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstdint>
+#include <numeric>
 
 #include "device.hpp"
 #include "dtype.hpp"

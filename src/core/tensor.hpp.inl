@@ -143,7 +143,8 @@ Tensor<_DType, _Device>::Tensor(const cv::Mat& m) {
 #endif
 
 template <DType _DType, DeviceLikeType _Device>
-Tensor<_DType, _Device>::Tensor(const Tensor<_DType, _Device>& other) : desc_(other.desc_) {
+Tensor<_DType, _Device>::Tensor(const Tensor<_DType, _Device>& other)
+    : desc_(other.desc_), quantization_(other.quantization_) {
     const auto n = static_cast<std::size_t>(desc_.numel());
     if (n == 0) {
         data_ = nullptr;
@@ -161,6 +162,7 @@ Tensor<_DType, _Device>& Tensor<_DType, _Device>::operator=(
         Tensor tmp(other);
         std::swap(data_, tmp.data_);
         std::swap(desc_, tmp.desc_);
+        std::swap(quantization_, tmp.quantization_);
     }
 
     return *this;
@@ -168,7 +170,9 @@ Tensor<_DType, _Device>& Tensor<_DType, _Device>::operator=(
 
 template <DType _DType, DeviceLikeType _Device>
 Tensor<_DType, _Device>::Tensor(Tensor&& other) noexcept
-    : data_(other.data_), desc_(std::move(other.desc_)) {
+    : data_(other.data_),
+      desc_(std::move(other.desc_)),
+      quantization_(std::move(other.quantization_)) {
     const auto n = static_cast<std::size_t>(desc_.numel());
     other.data_ = nullptr;
 }
@@ -181,6 +185,7 @@ Tensor<_DType, _Device>& Tensor<_DType, _Device>::operator=(
 
         data_ = other.data_;
         desc_ = std::move(other.desc_);
+        quantization_ = std::move(other.quantization_);
 
         other.data_ = nullptr;
     }
@@ -217,6 +222,23 @@ Tensor<_DType, _Device>::data() const {
 template <DType _DType, DeviceLikeType _Device>
 const TensorDesc& Tensor<_DType, _Device>::desc() const {
     return desc_;
+}
+
+template <DType _DType, DeviceLikeType _Device>
+const std::optional<TensorQuantization>&
+Tensor<_DType, _Device>::quantization() const {
+    return quantization_;
+}
+
+template <DType _DType, DeviceLikeType _Device>
+void Tensor<_DType, _Device>::set_quantization(
+    TensorQuantization quantization) {
+    quantization_ = quantization;
+}
+
+template <DType _DType, DeviceLikeType _Device>
+void Tensor<_DType, _Device>::clear_quantization() {
+    quantization_.reset();
 }
 
 template <DType _DType, DeviceLikeType _Device>

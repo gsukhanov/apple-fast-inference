@@ -7,7 +7,20 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
+include(CheckCXXSourceCompiles)
+
 find_library(ACCELERATE_FRAMEWORK Accelerate)
+
+check_cxx_source_compiles("
+    #include <arm_neon.h>
+    #if !defined(__ARM_NEON) && !defined(__ARM_NEON__)
+    #error NEON is not enabled for this target
+    #endif
+    int main() {
+        int8x16_t value = vdupq_n_s8(0);
+        return vgetq_lane_s8(value, 0);
+    }
+" FASTINF_HAS_NEON)
 
 find_package(nlohmann_json REQUIRED)
 find_package(benchmark REQUIRED)
@@ -18,6 +31,7 @@ add_library(${PROJECT_NAME}_objs INTERFACE)
 target_compile_definitions(${PROJECT_NAME}_objs INTERFACE
     FASTINF_HAS_OPENCV=$<BOOL:${OpenCV_FOUND}>
     FASTINF_HAS_ACCELERATE=$<BOOL:${ACCELERATE_FRAMEWORK}>
+    FASTINF_HAS_NEON=$<BOOL:${FASTINF_HAS_NEON}>
 )
 if(APPLE AND ACCELERATE_FRAMEWORK)
     target_compile_options(${PROJECT_NAME}_objs INTERFACE
