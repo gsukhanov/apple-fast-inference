@@ -68,8 +68,8 @@
 = ПРИЛОЖЕНИЕ 3. ГРАФИК СРАВНЕНИЯ ПРОИЗВОДИТЕЛЬНОСТИ
 
 #figure(
-    image("../../static/generated/cpu_amx_speedup.svg", width: 100%),
-    caption: [Сравнение ускорения AMX-исполнения относительно CPU/NEON-исполнения],
+    image("../../static/generated/cpu_amx_latency.svg", width: 100%),
+    caption: [Сравнение времени выполнения CPU/NEON- и AMX-исполнения],
 )
 
 #h(2em) Источник данных: результаты выполнения бенчмарков матричного умножения.

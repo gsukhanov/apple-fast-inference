@@ -450,28 +450,28 @@ def generate_charts(points: list[BenchmarkPoint], output_dir: Path) -> list[Path
 
     render_grouped_bar_chart(
         latency_path,
-        "CPU vs AMX latency for matrix multiplication",
-        "Latency, ms (log scale)",
+        "Время выполнения матричного умножения CPU и AMX",
+        "Время, мс (логарифмическая шкала)",
         labels,
         [
-            ("CPU", cpu_latency, "#2563eb"),
+            ("CPU/NEON", cpu_latency, "#2563eb"),
             ("AMX", amx_latency, "#dc2626"),
         ],
     )
     render_single_bar_chart(
         speedup_path,
-        "AMX speedup relative to CPU",
-        "Speedup, x (log scale)",
+        "Ускорение AMX относительно CPU",
+        "Ускорение, раз (логарифмическая шкала)",
         speedup_points(points),
         "#059669",
     )
     render_grouped_bar_chart(
         throughput_path,
-        "CPU vs AMX throughput for matrix multiplication",
-        "GOp/s (log scale)",
+        "Пропускная способность матричного умножения CPU и AMX",
+        "Гигаопераций/с (логарифмическая шкала)",
         labels,
         [
-            ("CPU", cpu_throughput, "#2563eb"),
+            ("CPU/NEON", cpu_throughput, "#2563eb"),
             ("AMX", amx_throughput, "#dc2626"),
         ],
     )
