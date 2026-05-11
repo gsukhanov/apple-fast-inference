@@ -56,4 +56,4 @@ private:
 } // namespace nn
 } // namespace fastinf
 
-#include "../../../src/nn/conv_im2col.hpp.inl"
+#include "../../../src/nn/backend/neon/conv2d.hpp.inl"

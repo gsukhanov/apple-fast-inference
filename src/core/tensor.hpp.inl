@@ -104,8 +104,8 @@ Tensor<_DType, _Device>::Tensor(const view_t& view)
     }
 }
 
-template <DType _DType, DeviceLikeType _Device>
 #if FASTINF_HAS_OPENCV
+template <DType _DType, DeviceLikeType _Device>
 Tensor<_DType, _Device>::Tensor(const cv::Mat& m) {
     constexpr int expected_depth = OpenCvTraits<_DType>::depth;
     if constexpr (_DType == DType::int64) {
@@ -143,7 +143,7 @@ Tensor<_DType, _Device>::Tensor(const cv::Mat& m) {
 #endif
 
 template <DType _DType, DeviceLikeType _Device>
-Tensor<_DType, _Device>::Tensor(const Tensor& other) : desc_(other.desc_) {
+Tensor<_DType, _Device>::Tensor(const Tensor<_DType, _Device>& other) : desc_(other.desc_) {
     const auto n = static_cast<std::size_t>(desc_.numel());
     if (n == 0) {
         data_ = nullptr;
