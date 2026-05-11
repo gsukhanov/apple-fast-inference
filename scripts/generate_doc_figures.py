@@ -21,7 +21,7 @@ TENSOR_MUL_RE = re.compile(
     r"/(?P<m>\d+)/(?P<k>\d+)/(?P<n>\d+)"
 )
 LENET_RE = re.compile(
-    r"BM_LeNet(?P<dtype>Float32|Float64)(?P<device>Greedy|CPU|AMX)/(?P<batch>\d+)"
+    r"BM_LeNet(?P<dtype>Float32|Float64)(?P<device>Neon|CPU|AMX)/(?P<batch>\d+)"
 )
 
 
@@ -57,7 +57,7 @@ class BenchmarkPoint:
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Generate CPU/AMX performance charts for Typst documentation."
+        description="Generate CPU/NEON and AMX performance charts for Typst documentation."
     )
     parser.add_argument(
         "--benchmark",
@@ -162,7 +162,7 @@ def extract_points(results: dict) -> list[BenchmarkPoint]:
             }[lenet_match.group("dtype")]
             device = {
                 "CPU": "cpu",
-                "Greedy": "greedy",
+                "Neon": "neon",
                 "AMX": "amx",
             }[lenet_match.group("device")]
             batch = int(lenet_match.group("batch"))
@@ -242,12 +242,12 @@ def write_typst_snippet(output_dir: Path) -> Path:
 
 #figure(
   image("../../static/generated/cpu_amx_latency.svg", width: 100%),
-  caption: [Сравнение времени выполнения CPU Conv2d, Greedy im2col и AMX Conv2d],
+  caption: [Сравнение времени выполнения CPU Conv2d, NEON im2col и AMX Conv2d],
 )
 
 #figure(
   image("../../static/generated/cpu_amx_matmul_latency.svg", width: 100%),
-  caption: [Сравнение времени выполнения матричного умножения CPU и AMX],
+  caption: [Сравнение времени выполнения матричного умножения CPU/NEON и AMX],
 )
 """
     output_path.write_text(content, encoding="utf-8")
@@ -485,15 +485,15 @@ def generate_lenet_latency_chart(points: list[BenchmarkPoint], output_dir: Path)
         labels,
         make_latency_series(
             points,
-            ["cpu", "greedy", "amx"],
+            ["cpu", "neon", "amx"],
             {
                 "cpu": "CPU Conv2d",
-                "greedy": "Greedy im2col",
+                "neon": "NEON im2col",
                 "amx": "AMX Conv2d",
             },
             {
                 "cpu": "#2563eb",
-                "greedy": "#f59e0b",
+                "neon": "#f59e0b",
                 "amx": "#dc2626",
             },
         ),
@@ -506,7 +506,7 @@ def generate_matmul_latency_chart(points: list[BenchmarkPoint], output_dir: Path
     path = output_dir / "cpu_amx_matmul_latency.svg"
     render_grouped_bar_chart(
         path,
-        "Время выполнения матричного умножения CPU и AMX",
+        "Время выполнения матричного умножения CPU/NEON и AMX",
         "Время, мс (логарифмическая шкала)",
         labels,
         make_latency_series(

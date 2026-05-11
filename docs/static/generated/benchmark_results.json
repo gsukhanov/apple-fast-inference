@@ -1,6 +1,6 @@
 {
   "context": {
-    "date": "2026-05-11T14:59:15+03:00",
+    "date": "2026-05-11T23:44:40+03:00",
     "host_name": "MacBook-Pro-Aleksandr-2.local",
     "executable": "/Users/lpcode/Programs/20_STUDY/HSE/2025-2026/coursework/apple-fast-inference/build/fastinf_benchmark",
     "num_cpus": 10,
@@ -8,9 +8,9 @@
     "cpu_scaling_enabled": false,
     "caches": [],
     "load_avg": [
-      1.43701,
-      1.54541,
-      1.89062
+      2.53516,
+      2.59766,
+      2.8208
     ],
     "library_version": "v1.9.4",
     "library_build_type": "release",
@@ -18,51 +18,51 @@
   },
   "benchmarks": [
     {
-      "name": "BM_LeNetFloat32Greedy/1",
+      "name": "BM_LeNetFloat32Neon/1",
       "family_index": 0,
       "per_family_instance_index": 0,
-      "run_name": "BM_LeNetFloat32Greedy/1",
+      "run_name": "BM_LeNetFloat32Neon/1",
       "run_type": "iteration",
       "repetitions": 1,
       "repetition_index": 0,
       "threads": 1,
       "iterations": 1,
-      "real_time": 454459249.9732971,
-      "cpu_time": 454450999.99999994,
+      "real_time": 66461249.95313585,
+      "cpu_time": 66452999.99999987,
       "time_unit": "ns",
-      "items_per_second": 2.200457255017593,
+      "items_per_second": 15.048229575790437,
       "label": "batch=1"
     },
     {
-      "name": "BM_LeNetFloat32Greedy/5",
+      "name": "BM_LeNetFloat32Neon/5",
       "family_index": 0,
       "per_family_instance_index": 1,
-      "run_name": "BM_LeNetFloat32Greedy/5",
+      "run_name": "BM_LeNetFloat32Neon/5",
       "run_type": "iteration",
       "repetitions": 1,
       "repetition_index": 0,
       "threads": 1,
       "iterations": 1,
-      "real_time": 2285709917.0796576,
-      "cpu_time": 2285659000.0,
+      "real_time": 334673417.0336276,
+      "cpu_time": 334650999.9999998,
       "time_unit": "ns",
-      "items_per_second": 2.1875529114360455,
+      "items_per_second": 14.9409384702272,
       "label": "batch=5"
     },
     {
-      "name": "BM_LeNetFloat32Greedy/10",
+      "name": "BM_LeNetFloat32Neon/10",
       "family_index": 0,
       "per_family_instance_index": 2,
-      "run_name": "BM_LeNetFloat32Greedy/10",
+      "run_name": "BM_LeNetFloat32Neon/10",
       "run_type": "iteration",
       "repetitions": 1,
       "repetition_index": 0,
       "threads": 1,
       "iterations": 1,
-      "real_time": 4578012790.996581,
-      "cpu_time": 4577844000.000001,
+      "real_time": 672088792.0819223,
+      "cpu_time": 672018999.9999999,
       "time_unit": "ns",
-      "items_per_second": 2.184434419346749,
+      "items_per_second": 14.88053165163485,
       "label": "batch=10"
     },
     {
@@ -75,10 +75,10 @@
       "repetition_index": 0,
       "threads": 1,
       "iterations": 1,
-      "real_time": 74489375.11071563,
-      "cpu_time": 74490000.00000083,
+      "real_time": 79740040.93557596,
+      "cpu_time": 79740000.00000015,
       "time_unit": "ns",
-      "items_per_second": 13.424620754463536,
+      "items_per_second": 12.540757461750667,
       "label": "batch=1"
     },
     {
@@ -91,10 +91,10 @@
       "repetition_index": 0,
       "threads": 1,
       "iterations": 1,
-      "real_time": 374979249.9002069,
-      "cpu_time": 374972000.00000143,
+      "real_time": 409745250.13007224,
+      "cpu_time": 401609999.9999998,
       "time_unit": "ns",
-      "items_per_second": 13.334328963229204,
+      "items_per_second": 12.449889195986161,
       "label": "batch=5"
     },
     {
@@ -107,10 +107,10 @@
       "repetition_index": 0,
       "threads": 1,
       "iterations": 1,
-      "real_time": 744449375.1972914,
-      "cpu_time": 744408000.0000018,
+      "real_time": 792383915.9775525,
+      "cpu_time": 791535000.0000001,
       "time_unit": "ns",
-      "items_per_second": 13.433493460575352,
+      "items_per_second": 12.633680127852841,
       "label": "batch=10"
     },
     {
@@ -122,11 +122,11 @@
       "repetitions": 1,
       "repetition_index": 0,
       "threads": 1,
-      "iterations": 6,
-      "real_time": 1243986.1505602796,
-      "cpu_time": 1243833.3333329628,
+      "iterations": 8,
+      "real_time": 1326426.980085671,
+      "cpu_time": 1326375.0000000463,
       "time_unit": "ns",
-      "items_per_second": 803.9662334184359,
+      "items_per_second": 753.9345961737556,
       "label": "batch=1"
     },
     {
@@ -138,11 +138,11 @@
       "repetitions": 1,
       "repetition_index": 0,
       "threads": 1,
-      "iterations": 1,
-      "real_time": 5967542.063444853,
-      "cpu_time": 5967000.000000056,
+      "iterations": 2,
+      "real_time": 6501875.0028684735,
+      "cpu_time": 6502000.000000007,
       "time_unit": "ns",
-      "items_per_second": 837.9420144125949,
+      "items_per_second": 768.9941556444162,
       "label": "batch=5"
     },
     {
@@ -155,10 +155,10 @@
       "repetition_index": 0,
       "threads": 1,
       "iterations": 1,
-      "real_time": 11819208.040833473,
-      "cpu_time": 11818999.999999136,
+      "real_time": 13047832.995653152,
+      "cpu_time": 13047999.999999948,
       "time_unit": "ns",
-      "items_per_second": 846.0952703275008,
+      "items_per_second": 766.4009809932587,
       "label": "batch=10"
     },
     {
@@ -171,10 +171,10 @@
       "repetition_index": 0,
       "threads": 1,
       "iterations": 1,
-      "real_time": 454704249.97620285,
-      "cpu_time": 454697999.9999987,
+      "real_time": 479925417.10846126,
+      "cpu_time": 479279000.0,
       "time_unit": "ns",
-      "items_per_second": 4612186.550193768
+      "items_per_second": 4375639.241443919
     },
     {
       "name": "BM_TensorMul<DType::float32, DeviceLikeType::cpu>/256/256/256",
@@ -186,10 +186,10 @@
       "repetition_index": 0,
       "threads": 1,
       "iterations": 1,
-      "real_time": 3653449167.0317945,
-      "cpu_time": 3653357999.999999,
+      "real_time": 3858434249.879792,
+      "cpu_time": 3852273999.9999995,
       "time_unit": "ns",
-      "items_per_second": 4592272.643414635
+      "items_per_second": 4355146.077355869
     },
     {
       "name": "BM_TensorMul<DType::float32, DeviceLikeType::cpu>/128/256/64",
@@ -201,10 +201,10 @@
       "repetition_index": 0,
       "threads": 1,
       "iterations": 1,
-      "real_time": 459252333.0356926,
-      "cpu_time": 459242000.0000015,
+      "real_time": 489530625.05461276,
+      "cpu_time": 488704000.00000113,
       "time_unit": "ns",
-      "items_per_second": 4566550.968770263
+      "items_per_second": 4291251.964379246
     },
     {
       "name": "BM_TensorMul<DType::float64, DeviceLikeType::cpu>/128/128/128",
@@ -216,10 +216,10 @@
       "repetition_index": 0,
       "threads": 1,
       "iterations": 1,
-      "real_time": 456010750.0292361,
-      "cpu_time": 455992000.0000002,
+      "real_time": 489205040.96895456,
+      "cpu_time": 488742000.00000024,
       "time_unit": "ns",
-      "items_per_second": 4599098.229793503
+      "items_per_second": 4290918.316821552
     },
     {
       "name": "BM_TensorMul<DType::float64, DeviceLikeType::cpu>/256/256/256",
@@ -231,10 +231,10 @@
       "repetition_index": 0,
       "threads": 1,
       "iterations": 1,
-      "real_time": 3649616708.9790106,
-      "cpu_time": 3649464000.0,
+      "real_time": 3973272167.146206,
+      "cpu_time": 3934813999.9999976,
       "time_unit": "ns",
-      "items_per_second": 4597172.62589794
+      "items_per_second": 4263788.834745431
     },
     {
       "name": "BM_TensorMul<DType::float64, DeviceLikeType::cpu>/128/256/64",
@@ -246,10 +246,10 @@
       "repetition_index": 0,
       "threads": 1,
       "iterations": 1,
-      "real_time": 454519083.9562565,
-      "cpu_time": 454506000.0000021,
+      "real_time": 497260333.0388665,
+      "cpu_time": 493905999.99999905,
       "time_unit": "ns",
-      "items_per_second": 4614134.906909899
+      "items_per_second": 4246054.9173324555
     },
     {
       "name": "BM_TensorMul<DType::float32, DeviceLikeType::amx>/128/128/128",
@@ -260,11 +260,11 @@
       "repetitions": 1,
       "repetition_index": 0,
       "threads": 1,
-      "iterations": 358,
-      "real_time": 19617.553009500716,
-      "cpu_time": 19620.11173184707,
+      "iterations": 731,
+      "real_time": 19310.533404146434,
+      "cpu_time": 19309.165526673798,
       "time_unit": "ns",
-      "items_per_second": 106887872437.3386
+      "items_per_second": 108609147148.43486
     },
     {
       "name": "BM_TensorMul<DType::float32, DeviceLikeType::amx>/256/256/256",
@@ -275,11 +275,11 @@
       "repetitions": 1,
       "repetition_index": 0,
       "threads": 1,
-      "iterations": 94,
-      "real_time": 75235.37336036246,
-      "cpu_time": 75244.68085108386,
+      "iterations": 197,
+      "real_time": 70457.70011993531,
+      "cpu_time": 70456.85279187086,
       "time_unit": "ns",
-      "items_per_second": 222968797398.49854
+      "items_per_second": 238120428818.4685
     },
     {
       "name": "BM_TensorMul<DType::float32, DeviceLikeType::amx>/128/256/64",
@@ -290,11 +290,11 @@
       "repetitions": 1,
       "repetition_index": 0,
       "threads": 1,
-      "iterations": 526,
-      "real_time": 12842.362866995452,
-      "cpu_time": 12842.205323190665,
+      "iterations": 1080,
+      "real_time": 12969.868516342507,
+      "cpu_time": 12969.444444443923,
       "time_unit": "ns",
-      "items_per_second": 163301547298.3389
+      "items_per_second": 161699447419.15408
     },
     {
       "name": "BM_TensorMul<DType::float64, DeviceLikeType::amx>/128/128/128",
@@ -305,11 +305,11 @@
       "repetitions": 1,
       "repetition_index": 0,
       "threads": 1,
-      "iterations": 236,
-      "real_time": 30392.30044015636,
-      "cpu_time": 30389.83050847721,
+      "iterations": 468,
+      "real_time": 29654.737112199902,
+      "cpu_time": 29611.111111109054,
       "time_unit": "ns",
-      "items_per_second": 69008348020.0721
+      "items_per_second": 70823144465.29573
     },
     {
       "name": "BM_TensorMul<DType::float64, DeviceLikeType::amx>/256/256/256",
@@ -320,11 +320,11 @@
       "repetitions": 1,
       "repetition_index": 0,
       "threads": 1,
-      "iterations": 49,
-      "real_time": 148159.8794308244,
-      "cpu_time": 148142.8571429549,
+      "iterations": 93,
+      "real_time": 148846.32471348008,
+      "cpu_time": 148354.83870968045,
       "time_unit": "ns",
-      "items_per_second": 113250252651.80571
+      "items_per_second": 113088431398.12772
     },
     {
       "name": "BM_TensorMul<DType::float64, DeviceLikeType::amx>/128/256/64",
@@ -335,11 +335,11 @@
       "repetitions": 1,
       "repetition_index": 0,
       "threads": 1,
-      "iterations": 313,
-      "real_time": 22105.830230604344,
-      "cpu_time": 22105.431309903826,
+      "iterations": 630,
+      "real_time": 22456.94465403046,
+      "cpu_time": 22452.38095237966,
       "time_unit": "ns",
-      "items_per_second": 94870440237.02988
+      "items_per_second": 93404436903.50485
     }
   ]
 }

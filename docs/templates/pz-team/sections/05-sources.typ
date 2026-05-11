@@ -69,12 +69,12 @@
 
 #figure(
     image("../../static/generated/cpu_amx_latency.svg", width: 100%),
-    caption: [Сравнение времени выполнения CPU Conv2d, Greedy im2col и AMX Conv2d],
+    caption: [Сравнение времени выполнения CPU Conv2d, NEON im2col и AMX Conv2d],
 )
 
 #figure(
     image("../../static/generated/cpu_amx_matmul_latency.svg", width: 100%),
-    caption: [Сравнение времени выполнения матричного умножения CPU и AMX],
+    caption: [Сравнение времени выполнения матричного умножения CPU/NEON и AMX],
 )
 
 #h(2em) Источник данных: результаты выполнения lenet_benchmark.cpp и tensor_mul_benchmark.cpp.

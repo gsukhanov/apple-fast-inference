@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <initializer_list>
 #include <iostream>
+#include <optional>
 
 #include "device.hpp"
 #include "dtype.hpp"
@@ -16,6 +17,13 @@
 #endif
 
 namespace fastinf {
+struct TensorQuantization {
+    DType source_dtype;
+    DType quantized_dtype;
+    std::int64_t zero_point = 0;
+    double scale = 1.0;
+};
+
 template <DType _DType, DeviceLikeType _Device = DeviceLikeType::cpu>
 class Tensor {
  public:
@@ -56,6 +64,9 @@ class Tensor {
     const scalar_t* data() const;
 
     const TensorDesc& desc() const;
+    const std::optional<TensorQuantization>& quantization() const;
+    void set_quantization(TensorQuantization quantization);
+    void clear_quantization();
 
     bool is_contiguous() const;
     int dim() const;
@@ -96,6 +107,7 @@ class Tensor {
  private:
     scalar_t* data_{nullptr};
     TensorDesc desc_;
+    std::optional<TensorQuantization> quantization_;
 };
 
 template <DType _DType, DeviceLikeType _Device = DeviceLikeType::cpu>
