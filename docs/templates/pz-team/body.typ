@@ -1,4 +1,4 @@
-#import "../../shared/typst/core-erguchev.typ": project-name, project-name-english, project-summary, project-type
+#import "../shared/typst/core.typ": project-name, project-name-english, project-summary, project-type
 
 #include "sections/01-overview.typ"
 #include "sections/02-requirements.typ"
